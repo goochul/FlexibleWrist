@@ -56,8 +56,11 @@ def initialize_force_sensor(calibrate=True, predefined_bias=np.zeros(3)):
     if calibrate:
         initial_sensor = ForceSensor("/dev/ttyUSB0", np.zeros(3))
         initial_sensor.force_sensor_setup()
-        force_offset = calculate_force_offset(initial_sensor)
+        offset = calculate_force_offset(initial_sensor)
+        force_offset = offset[0]
+        torque_offset = offset[1]
         print("Calculated force offset:", force_offset)
+        print("Calculated torque offset:", torque_offset)
     else:
         force_offset = predefined_bias
         print("Using predefined force offset:", force_offset)
@@ -83,7 +86,9 @@ def read_ft_sensor_data():
             stop_threads.set()
             movement_done.set()
             recording_done.set()
-            break
+            subprocess.Popen(["python3", "gravity_compensation.py"])  # Trigger gravity compensation script
+            sys.exit()  # Exit to avoid plotting and saving
+
 
         # Append data
         force_data.append((elapsed_time, force_magnitude))
@@ -156,7 +161,18 @@ def move_to_position(robot_interface, target_positions, controller_cfg):
 
 def control_robot_movement(robot_interface, controller_cfg):
     reset_joint_positions = [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342] 
-    des_joint_positions = [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342] 
+    des_joint_positions = [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
+
+    # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]              # Alimunum Frame origin for Panda
+    # [-0.00767597,  0.51022177, -0.02485,    -2.17755938, -0.02581892,  4.27849113,  0.76947171]   # -10mm
+    # [-0.00744893,  0.52245477, -0.02512409, -2.17452938, -0.02589844,  4.28777901,  0.76955813]   # -15mm
+    # [-0.00764558,  0.534649,   -0.02463884, -2.17151983, -0.02343242,  4.29640372,  0.76849901]   # -20mm
+    # [-0.00749242,  0.54708303, -0.0248903,  -2.16802759, -0.02433914,  4.30569219,  0.76901974]   # -25mm
+    # [-0.00786796,  0.55953669, -0.0245075,  -2.16437121, -0.02514699,  4.31473024, 0.76914151]    # -30mm
+    # [-0.0075991,   0.57211732, -0.02482249, -2.1605095,  -0.02561976,  4.32375554,  0.76977484]   # -35mm
+    # [-0.00817004,  0.584347,   -0.02353005, -2.15728207, -0.01831063,  4.33053075,  0.76582103]   # -40mm
+    # [-0.00817453,  0.58435545, -0.02352894, -2.15726601, -0.01829912,  4.33055562,  0.76575631]   # -45mm
+
     # Movement sequence
     move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg)
     if stop_threads.is_set():
@@ -235,7 +251,7 @@ def main():
     global global_start_time, force_sensor, data_folder
 
     # Set up calibration and bias
-    calibration_flag = False
+    calibration_flag = True
     predefined_bias = np.array([3, 8.5, 2.8])
 
     # Initialize force sensor
@@ -283,7 +299,7 @@ def main():
 
     # Start gravity compensation if threshold was exceeded
     if stop_threads.is_set():
-        subprocess.Popen(["python3", "gravity_compensation_overload.py"])
+        subprocess.Popen(["python3", "gravity_compensation.py"])
         sys.exit()  # Immediately terminate the current script after plotting
 
 if __name__ == "__main__":

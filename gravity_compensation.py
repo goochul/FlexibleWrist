@@ -29,6 +29,7 @@ def osc_move(robot_interface, controller_type, controller_cfg, num_steps, time_i
         # Sleep for the time interval (optional)
         time.sleep(time_interval)
     return time_stamps, z_positions
+
 def start_gravity_compensation(robot_interface, controller_type, controller_cfg):
     while robot_interface.state_buffer_size == 0:
         logger.warning("Robot state not received")
@@ -43,6 +44,7 @@ def start_gravity_compensation(robot_interface, controller_type, controller_cfg)
     plt.title("Z-axis position over time")
     plt.legend()
     plt.show()
+
 def main():
     args = parse_args()
     robot_interface = FrankaInterface(config_root + f"/{args.interface_cfg}", use_visualizer=False)
