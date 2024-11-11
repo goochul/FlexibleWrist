@@ -5,6 +5,7 @@ import numpy as np
 import threading
 import time
 import subprocess
+import pandas as pd
 import matplotlib.pyplot as plt
 from ForceSensor import ForceSensor
 from deoxys import config_root
@@ -17,20 +18,24 @@ logger = get_deoxys_example_logger()
 
 # Global variables
 force_data = []
+torque_data = []  # New global variable for torque data
 z_positions = []
+joint_positions = []
+joint_velocities = []
 timestamps = []
 global_start_time = None
 force_sensor = None
 initial_z_position = None  # Store the initial Z-position for offsetting
 max_samples = 1000  # Maximum number of samples to read
-force_threshold = 20  # Force threshold for gravity compensation
-torque_threshold = 7  # Torque threshold for gravity compensation
+force_threshold = 50  # Force threshold for gravity compensation
+torque_threshold = 3  # Torque threshold for gravity compensation
 
 # Event signals
 stop_threads = threading.Event()  # Control thread termination
 movement_done = threading.Event()
 recording_done = threading.Event()
 
+# Parse command-line arguments
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--interface-cfg", type=str, default="charmander.yml")
@@ -62,28 +67,33 @@ def initialize_force_sensor(calibrate=True, predefined_bias=np.zeros(3)):
 
 # Continuously read force sensor data with relative time
 def read_ft_sensor_data():
-    global force_data, global_start_time, force_sensor
+    global force_data, torque_data, global_start_time, force_sensor
     while len(force_data) < max_samples and not stop_threads.is_set():
-        force = force_sensor.get_force_obs()  # Read only force data
+        force, torque = force_sensor.get_force_obs()  # Read force and torque data
         elapsed_time = time.time() - global_start_time
 
-        # Calculate Euclidean norm for force
-        force_magnitude = np.linalg.norm(force)  # Norm of force [Fx, Fy, Fz]
+        # Calculate Euclidean norm for force and torque
+        force_magnitude = np.linalg.norm(force)
+        torque_magnitude = np.linalg.norm(torque)
 
-        # Check if force magnitude exceeds the threshold
-        if force_magnitude > force_threshold:
-            print("Force threshold exceeded. Stopping all actions and triggering gravity compensation.")
+        # Check thresholds
+        if (force_magnitude > force_threshold) or (torque_magnitude > torque_threshold):
+            print("Threshold exceeded. Stopping all actions and triggering gravity compensation.")
             print(f"Force magnitude: {force_magnitude:.2f} N")
-            stop_threads.set()  # Stop robot movements
-            movement_done.set()  # Signal that movement should stop
-            recording_done.set()  # Stop video recording
-            break  # Exit force monitoring loop
+            stop_threads.set()
+            movement_done.set()
+            recording_done.set()
+            break
 
-        force_data.append((elapsed_time, force_magnitude))  # Store force magnitude only
+        # Append data
+        force_data.append((elapsed_time, force_magnitude))
+        torque_data.append((elapsed_time, torque[0], torque[1], torque[2]))  # Store torque components
+
         time.sleep(0.01)
 
 # Video recording function
 def record_video(output_path, duration=30, fps=60):
+    print("Recording")  # Print "Recording" at the start of video recording
     cap = cv2.VideoCapture(0)  # Open the default camera
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(output_path, fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
@@ -106,6 +116,9 @@ def get_end_effector_position(robot_interface):
     position = ee_pose[:3, 3]
     return position
 
+def get_joint_data(robot_interface):
+    return robot_interface._state_buffer[-1].q, robot_interface._state_buffer[-1].dq
+
 def move_to_position(robot_interface, target_positions, controller_cfg):
     global initial_z_position  # Make this accessible globally to offset Z-position
     action = list(target_positions) + [-1.0]
@@ -115,6 +128,9 @@ def move_to_position(robot_interface, target_positions, controller_cfg):
             break  # Stop movement if stop_threads is set
         if len(robot_interface._state_buffer) > 0:
             current_ee_position = get_end_effector_position(robot_interface)
+            joint_pos, joint_vel = get_joint_data(robot_interface)
+            joint_positions.append(joint_pos)
+            joint_velocities.append(joint_vel)
 
             if initial_z_position is None:
                 initial_z_position = current_ee_position[2]  # Capture the initial Z-position
@@ -140,8 +156,33 @@ def control_robot_movement(robot_interface, controller_cfg):
     move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg)
     movement_done.set()  # Signal that movement is done
 
-# Plot Force Magnitude and Z-Position data in a single figure at the end
-def plot_merged_data():
+# Save data to CSV
+def save_data_to_csv():
+    # Create a folder path with today's date and current time
+    date_folder = time.strftime("%Y%m%d")
+    time_folder = time.strftime("%H%M%S")
+    data_folder = os.path.join("data", date_folder, time_folder)
+    os.makedirs(data_folder, exist_ok=True)
+
+    # Save force data
+    force_df = pd.DataFrame(force_data, columns=["Timestamp", "Force Magnitude"])
+    force_df.to_csv(os.path.join(data_folder, "force_data.csv"), index=False)
+
+    # Save Z-position data
+    z_pos_df = pd.DataFrame({"Timestamp": timestamps, "Z Position": z_positions})
+    z_pos_df.to_csv(os.path.join(data_folder, "z_position_data.csv"), index=False)
+
+    # Save joint positions if data is available
+    if joint_positions:
+        num_joints = len(joint_positions[0]) if isinstance(joint_positions[0], (list, np.ndarray)) else 1
+        joint_pos_df = pd.DataFrame(joint_positions, columns=[f"Joint {i+1} Position" for i in range(num_joints)])
+        joint_pos_df.to_csv(os.path.join(data_folder, "joint_positions.csv"), index=False)
+
+    print(f"Data saved to folder: {data_folder}")
+    return data_folder
+
+# Plot Force Magnitude, Z-Position, and Norm Torque data in a single figure at the end
+def plot_merged_data(data_folder):
     fig, ax1 = plt.subplots()
 
     # Plot Force magnitude
@@ -150,7 +191,7 @@ def plot_merged_data():
         ax1.plot(times, force_magnitudes, label="Force Magnitude", color='tab:blue')
     ax1.set_xlabel("Time (s)")
     ax1.set_ylabel("Force Magnitude (N)", color='tab:blue')
-    ax1.set_xlim([0, 17.5])
+    ax1.set_xlim([0, max(timestamps)])
     ax1.set_ylim([-25, 25])  # Set y-axis limits for force magnitudes
     ax1.legend(loc="upper left")
     ax1.grid(True)
@@ -158,17 +199,28 @@ def plot_merged_data():
     # Plot Z-position data on secondary y-axis
     if timestamps:
         ax2 = ax1.twinx()
-        ax2.plot(timestamps, z_positions, label="Z Position", color='tab:red', marker='o', markersize=4)  # Adjusted marker size
+        ax2.plot(timestamps, z_positions, label="Z Position", color='tab:red', marker='o', markersize=4)
         ax2.set_ylabel("End-Effector Z Position (m)", color='tab:red')
         ax2.set_ylim([-0.05, 0.05])  # Set y-axis limits for Z-position after offsetting
         ax2.legend(loc="upper right")
 
-    plt.title("Force Magnitude and Z Position of End-Effector Over Time")
+    # Plot Norm Torque data on ax1
+    if torque_data:
+        times, torques_x, torques_y, torques_z = zip(*torque_data)
+        norm_torques = [np.linalg.norm([tx, ty, tz]) for tx, ty, tz in zip(torques_x, torques_y, torques_z)]
+        ax1.plot(times, norm_torques, label="Norm Torque", color='tab:green', linestyle='--')
+        ax1.legend(loc="upper left")
+
+    plt.title("Force Magnitude, Z Position of End-Effector, and Norm Torque Over Time")
+    plot_path = os.path.join(data_folder, "plot.png")
+    plt.savefig(plot_path)  # Save the plot in the data folder
     plt.show()
+
+    print(f"Plot saved to {plot_path}")
 
 # Main function
 def main():
-    global global_start_time
+    global global_start_time, force_sensor, data_folder
 
     # Set up calibration and bias
     calibration_flag = False
@@ -176,6 +228,8 @@ def main():
 
     # Initialize force sensor
     initialize_force_sensor(calibrate=calibration_flag, predefined_bias=predefined_bias)
+    if force_sensor is None:
+        raise RuntimeError("Force sensor initialization failed.")
 
     # Initialize robot interface
     args = parse_args()
@@ -185,12 +239,20 @@ def main():
     # Set global start time for all data collection
     global_start_time = time.time()
 
-    # Start FT sensor reading thread
-    sensor_thread = threading.Thread(target=read_ft_sensor_data, name="ForceSensorDataThread", daemon=True)
-    sensor_thread.start()
+    # Create data folder path with today's date and current time
+    date_folder = time.strftime("%Y%m%d")
+    time_folder = time.strftime("%H%M%S")
+    data_folder = os.path.join("data", date_folder, time_folder)
+    os.makedirs(data_folder, exist_ok=True)
 
-    # Start video recording thread
-    video_thread = threading.Thread(target=record_video, args=("output_video.avi",), name="VideoRecordingThread", daemon=True)
+    # Path for video output
+    video_output_path = os.path.join(data_folder, "output_video.avi")
+
+    # Start threads for FT sensor data reading and video recording
+    sensor_thread = threading.Thread(target=read_ft_sensor_data, name="ForceSensorDataThread", daemon=True)
+    video_thread = threading.Thread(target=record_video, args=(video_output_path, 30, 60), name="VideoRecordingThread", daemon=True)
+
+    sensor_thread.start()
     video_thread.start()
 
     # Robot movement in main thread
@@ -198,13 +260,14 @@ def main():
 
     # Wait for threads to finish
     sensor_thread.join()
-    movement_done.wait()
-    recording_done.set()  # Stop the video recording thread
+    recording_done.set()  # Ensure video recording thread stops
     video_thread.join()
+    movement_done.wait()
 
     # Close robot interface and plot merged data after movement
     robot_interface.close()
-    plot_merged_data()  # Display merged force magnitude and Z-position plot
+    data_folder = save_data_to_csv()  # Save all data to CSV
+    plot_merged_data(data_folder)  # Display and save the plot
 
     # Start gravity compensation if threshold was exceeded
     if stop_threads.is_set():

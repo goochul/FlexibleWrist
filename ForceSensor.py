@@ -106,7 +106,7 @@ class ForceSensor:
                     frame_synced = True
                 else:
                     self._ser.read(1)
-           
+
         start_time = time.perf_counter()
         frame_header = self._ser.read(1)
 
@@ -114,7 +114,7 @@ class ForceSensor:
             print("Lost sync")
             data_frame = self._ser.read(34)
             crc16_ccitt_frame = self._ser.read(2)
-            return self.prev_force
+            return self.prev_force, np.zeros(3)
 
         data_frame = self._ser.read(34)
         crc16_ccitt_frame = self._ser.read(2)
@@ -123,7 +123,7 @@ class ForceSensor:
         checksum = crc_calculator.checksum(data_frame)
         if checksum != crc16_ccitt:
             print("CRC mismatch received")
-            return self.prev_force
+            return self.prev_force, np.zeros(3)
 
         status = struct.unpack_from('H', data_frame, 0)[0]
         Fx = struct.unpack_from('f', data_frame, 2)[0]
@@ -134,8 +134,9 @@ class ForceSensor:
         Mz = struct.unpack_from('f', data_frame, 22)[0]
         timestamp = struct.unpack_from('I', data_frame, 26)[0]
         temperature = struct.unpack_from('f', data_frame, 30)[0]
-        self.prev_force = np.array([Fx,Fy,Fz]) - self.force_offset
-        return self.prev_force
+        self.prev_force = np.array([Fx, Fy, Fz]) - self.force_offset
+        torque = np.array([Mx, My, Mz])
+        return self.prev_force, torque
 
     @staticmethod
     def _sleep(duration, get_now=time.perf_counter):
