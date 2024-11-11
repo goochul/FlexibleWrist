@@ -19,26 +19,35 @@ else:
     # Multiply Z Position by -1 to make it positive
     merged_data["Z Position"] = merged_data["Z Position"] * -1
 
-    # Detect loading and unloading parts
-    # Loading phase (Z Position increases)
-    loading_data = merged_data[merged_data["Z Position"].diff().fillna(0) >= 0]
+    # Apply force threshold to detect the beginning of loading
+    force_threshold = 10  # Threshold in Newtons
+    above_threshold = merged_data[merged_data['Force Magnitude'] > force_threshold]
 
-    # Unloading phase (Z Position decreases)
-    unloading_data = merged_data[merged_data["Z Position"].diff().fillna(0) < 0]
+    if above_threshold.empty:
+        print("No data points exceed the force threshold. Check the threshold value or data.")
+    else:
+        # Find the index where force first exceeds the threshold
+        threshold_index = above_threshold.index[0]
 
-    # Plotting Force Magnitude vs Z Position without connecting loading and unloading
-    plt.figure(figsize=(10, 6))
+        # Track direction changes in Z Position after reaching the force threshold
+        merged_data['Direction'] = merged_data['Z Position'].diff().fillna(0)
+        change_index = merged_data[(merged_data.index > threshold_index) & (merged_data['Direction'] < 0)].index[0]
 
-    # Plot loading part with scatter for individual points
-    plt.scatter(loading_data["Z Position"], loading_data["Force Magnitude"], label="Loading", color='r')
+        # Split data into loading and unloading based on the threshold and direction change
+        loading_data = merged_data.loc[:change_index]
+        unloading_data = merged_data.loc[change_index + 1:]
 
-    # Plot unloading part with scatter for individual points
-    plt.scatter(unloading_data["Z Position"], unloading_data["Force Magnitude"], label="Unloading", color='b')
+        # Plotting Force Magnitude vs Z Position for loading and unloading phases
+        plt.figure(figsize=(10, 6))
 
-    # Label and title the plot
-    plt.xlabel("Z Position (m)")
-    plt.ylabel("Force Magnitude (N)")
-    plt.title("Stiffness on Pressing Test (Loading and Unloading)")
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+        # Plot loading and unloading with different colors and avoid connecting lines between them
+        plt.plot(loading_data["Z Position"], loading_data["Force Magnitude"], label="Loading", color='red', marker='o', linestyle='-')
+        plt.plot(unloading_data["Z Position"], unloading_data["Force Magnitude"], label="Unloading", color='blue', marker='o', linestyle='-')
+
+        # Label and title the plot
+        plt.xlabel("Z Position (m)")
+        plt.ylabel("Force Magnitude (N)")
+        plt.title("Sitffness on the Pressing Test (Loading and Unloading Phases)")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
