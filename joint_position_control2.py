@@ -95,8 +95,19 @@ def read_ft_sensor_data():
 def record_video(output_path, duration=30, fps=60):
     print("Recording")  # Print "Recording" at the start of video recording
     cap = cv2.VideoCapture(0)  # Open the default camera
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    
+    if not cap.isOpened():
+        print("Error: Could not open video capture.")
+        return
+    
+    fourcc = cv2.VideoWriter_fourcc(*'MJPG')  # Use 'MJPG' codec for wider compatibility
     out = cv2.VideoWriter(output_path, fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
+    
+    if not out.isOpened():
+        print("Error: Could not open video writer.")
+        cap.release()
+        return
+
     start_time = time.time()
 
     while time.time() - start_time < duration and not recording_done.is_set():
@@ -104,6 +115,7 @@ def record_video(output_path, duration=30, fps=60):
         if ret:
             out.write(frame)
         else:
+            print("Error: Frame capture failed.")
             break
 
     cap.release()
