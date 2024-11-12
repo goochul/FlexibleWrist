@@ -14,7 +14,7 @@ out = cv2.VideoWriter(output_filename, fourcc, frame_rate, (frame_width, frame_h
 
 # Start time of the recording
 start_time = time.time()
-record_duration = 0  # Duration in seconds
+record_duration = 60  # Duration in seconds
 
 print("Recording... Press 'q' to stop early.")
 

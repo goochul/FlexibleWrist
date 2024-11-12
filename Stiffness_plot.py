@@ -37,6 +37,8 @@ else:
         loading_data = merged_data.loc[:change_index]
         unloading_data = merged_data.loc[change_index + 1:]
 
+        print(unloading_data)
+
         # Plotting Force Magnitude vs Z Position for loading and unloading phases
         plt.figure(figsize=(10, 6))
 
