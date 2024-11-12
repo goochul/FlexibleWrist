@@ -56,8 +56,11 @@ finally:
 save = input("Recording complete. Do you want to save the recording? (yes/no): ").strip().lower()
 if save != 'yes':
     try:
-        os.remove(output_filename)
-        print("Recording deleted.")
+        if os.path.exists(output_filename):
+            os.remove(output_filename)
+            print("Recording deleted.")
+        else:
+            print("Recording file not found for deletion.")
     except OSError as e:
         print(f"Error: {e.strerror}")
 else:
