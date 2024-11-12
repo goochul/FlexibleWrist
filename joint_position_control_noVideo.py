@@ -26,12 +26,14 @@ global_start_time = None
 force_sensor = None
 initial_z_position = None
 max_samples = 1000
-force_threshold = 10
-torque_threshold = 3
+force_threshold = 5
+torque_threshold = 1
 
 # Event signals
 stop_threads = threading.Event()
 movement_done = threading.Event()
+# Event to indicate when data saving is complete
+data_saved = threading.Event()
 
 # Parse command-line arguments
 def parse_args():
@@ -44,28 +46,29 @@ def parse_args():
 def calculate_force_offset(sensor, num_samples=100, sleep_time=0.001):
     readings = []
     for _ in range(num_samples):
-        force = sensor.get_force_obs()
-        readings.append(force)
+        force, torque = sensor.get_force_obs()
+        readings.append((force, torque))
         time.sleep(sleep_time)
-    return np.mean(readings, axis=0)
+    force_offset = np.mean([reading[0] for reading in readings], axis=0)
+    torque_offset = np.mean([reading[1] for reading in readings], axis=0)
+    return force_offset, torque_offset
 
 def initialize_force_sensor(calibrate=True, predefined_bias=np.zeros(3)):
     global force_sensor
     try:
         if calibrate:
             print("Calibrating force sensor...")
-            initial_sensor = ForceSensor("/dev/ttyUSB0", np.zeros(3))
+            initial_sensor = ForceSensor("/dev/ttyUSB0", np.zeros(3), np.zeros(3))
             initial_sensor.force_sensor_setup()
-            offset = calculate_force_offset(initial_sensor)
-            force_offset = offset[0]
-            torque_offset = offset[1]
+            force_offset, torque_offset = calculate_force_offset(initial_sensor)
             print("Calculated force offset:", force_offset)
             print("Calculated torque offset:", torque_offset)
         else:
             force_offset = predefined_bias
-            print("Using predefined force offset:", force_offset)
+            torque_offset = np.zeros(3)
+            print("Using predefined force and torque offsets:", force_offset, torque_offset)
 
-        force_sensor = ForceSensor("/dev/ttyUSB0", force_offset)
+        force_sensor = ForceSensor("/dev/ttyUSB0", force_offset, torque_offset)
         force_sensor.force_sensor_setup()
         print("Force sensor initialized.")
     except Exception as e:
@@ -83,11 +86,18 @@ def read_ft_sensor_data():
             torque_magnitude = np.linalg.norm(torque)
 
             if (force_magnitude > force_threshold) or (torque_magnitude > torque_threshold):
-                print("Threshold exceeded. Triggering gravity compensation.")
+                print("Threshold exceeded. Triggering gravity compensation immediately.")
                 stop_threads.set()
-                movement_done.set()
-                return
+                
+                # Start gravity compensation immediately in a separate thread
+                threading.Thread(target=start_gravity_compensation).start()
+                
+                # Offload data saving and plotting to avoid blocking
+                threading.Thread(target=save_and_plot_data).start()
+                
+                return  # Exit this thread after triggering compensation
 
+            # Append data if within threshold
             force_data.append((elapsed_time, force_magnitude))
             torque_data.append((elapsed_time, torque[0], torque[1], torque[2]))
             time.sleep(0.01)
@@ -163,7 +173,7 @@ def save_data_to_csv():
     print(f"Data saved to folder: {data_folder}")
     return data_folder
 
-# Plot Force Magnitude, Z-Position, and Norm Torque data without display
+# Plot data without display
 def plot_merged_data(data_folder):
     fig, ax1 = plt.subplots()
 
@@ -196,9 +206,27 @@ def plot_merged_data(data_folder):
     plt.close(fig)
     print(f"Plot saved to {plot_path}")
 
+# Run gravity compensation immediately and wait for data to save
+def start_gravity_compensation():
+    print("Starting gravity compensation immediately.")
+    subprocess.Popen(["python3", "gravity_compensation_watchdog.py"])
+    data_saved.wait()  # Wait until data is saved before exiting
+    os._exit(0)
+
+# Save and plot data in a separate thread
+def save_and_plot_data():
+    data_folder = save_data_to_csv()
+    plot_merged_data(data_folder)
+
+# Save and plot data in a separate thread, then signal completion
+def save_and_plot_data():
+    data_folder = save_data_to_csv()
+    plot_merged_data(data_folder)
+    data_saved.set()  # Signal that data has been saved
+
 # Main function
 def main():
-    global global_start_time, force_sensor, data_folder
+    global global_start_time, force_sensor, data_folder, robot_interface
 
     calibration_flag = True
     predefined_bias = np.array([3, 8.5, 2.8])
@@ -223,11 +251,6 @@ def main():
 
     global_start_time = time.time()
 
-    date_folder = time.strftime("%Y%m%d")
-    time_folder = time.strftime("%H%M%S")
-    data_folder = os.path.join("data", date_folder, time_folder)
-    os.makedirs(data_folder, exist_ok=True)
-
     sensor_thread = threading.Thread(target=read_ft_sensor_data, name="ForceSensorDataThread", daemon=True)
     sensor_thread.start()
 
@@ -235,12 +258,6 @@ def main():
 
     sensor_thread.join()
     movement_done.wait()
-
-    if stop_threads.is_set():
-        data_folder = save_data_to_csv()
-        plot_merged_data(data_folder)
-        subprocess.Popen(["python3", "gravity_compensation_watchdog.py"])
-        os._exit(0)
 
 if __name__ == "__main__":
     main()

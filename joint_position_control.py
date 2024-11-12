@@ -46,54 +46,63 @@ def parse_args():
 def calculate_force_offset(sensor, num_samples=100, sleep_time=0.001):
     readings = []
     for _ in range(num_samples):
-        force = sensor.get_force_obs()
-        readings.append(force)
+        force, torque = sensor.get_force_obs()
+        readings.append((force, torque))
         time.sleep(sleep_time)
-    return np.mean(readings, axis=0)
+    force_offset = np.mean([reading[0] for reading in readings], axis=0)
+    torque_offset = np.mean([reading[1] for reading in readings], axis=0)
+    return force_offset, torque_offset
+
 
 def initialize_force_sensor(calibrate=True, predefined_bias=np.zeros(3)):
     global force_sensor
-    if calibrate:
-        initial_sensor = ForceSensor("/dev/ttyUSB0", np.zeros(3))
-        initial_sensor.force_sensor_setup()
-        offset = calculate_force_offset(initial_sensor)
-        force_offset = offset[0]
-        torque_offset = offset[1]
-        print("Calculated force offset:", force_offset)
-        print("Calculated torque offset:", torque_offset)
-    else:
-        force_offset = predefined_bias
-        print("Using predefined force offset:", force_offset)
+    try:
+        if calibrate:
+            print("Calibrating force sensor...")
+            initial_sensor = ForceSensor("/dev/ttyUSB0", np.zeros(3), np.zeros(3))
+            initial_sensor.force_sensor_setup()
+            offset = calculate_force_offset(initial_sensor)
+            force_offset = offset[0]
+            torque_offset = offset[1]
+            print("Calculated force offset:", force_offset)
+            print("Calculated torque offset:", torque_offset)
+        else:
+            force_offset = predefined_bias
+            torque_offset = np.zeros(3)  # Adjust if predefined torque bias is needed
+            print("Using predefined force and torque offsets:", force_offset, torque_offset)
 
-    force_sensor = ForceSensor("/dev/ttyUSB0", force_offset)
-    force_sensor.force_sensor_setup()
+        force_sensor = ForceSensor("/dev/ttyUSB0", force_offset, torque_offset)
+        force_sensor.force_sensor_setup()
+        print("Force sensor initialized.")
+    except Exception as e:
+        print(f"Force sensor initialization failed: {e}")
 
-# Continuously read force sensor data with relative time
-# Update the section in `read_ft_sensor_data` where the threshold is exceeded
+
+
+# Continuously read force sensor data
 def read_ft_sensor_data():
     global force_data, torque_data, global_start_time, force_sensor
+    print("Starting force data reading thread...")
     while len(force_data) < max_samples and not stop_threads.is_set():
-        force, torque = force_sensor.get_force_obs()  # Read force and torque data
-        elapsed_time = time.time() - global_start_time
+        try:
+            force, torque = force_sensor.get_force_obs()
+            elapsed_time = time.time() - global_start_time
+            force_magnitude = np.linalg.norm(force)
+            torque_magnitude = np.linalg.norm(torque)
 
-        # Calculate Euclidean norm for force and torque
-        force_magnitude = np.linalg.norm(force)
-        torque_magnitude = np.linalg.norm(torque)
+            if (force_magnitude > force_threshold) or (torque_magnitude > torque_threshold):
+                print("Threshold exceeded. Triggering gravity compensation.")
+                stop_threads.set()
+                movement_done.set()
+                return
 
-        # Check thresholds
-        if (force_magnitude > force_threshold) or (torque_magnitude > torque_threshold):
-            print("Threshold exceeded. Stopping all actions and triggering gravity compensation.")
-            print(f"Force magnitude: {force_magnitude:.2f} N")
+            force_data.append((elapsed_time, force_magnitude))
+            torque_data.append((elapsed_time, torque[0], torque[1], torque[2]))
+            time.sleep(0.01)
+        except Exception as e:
+            print(f"Error reading force sensor data: {e}")
             stop_threads.set()
-            movement_done.set()
-            recording_done.set()
-            return  # Exit function without running subprocess here
-
-        # Append data
-        force_data.append((elapsed_time, force_magnitude))
-        torque_data.append((elapsed_time, torque[0], torque[1], torque[2]))  # Store torque components
-
-        time.sleep(0.01)
+            return
 
 # Video recording function
 def record_video(output_path, duration=15, fps=30):
