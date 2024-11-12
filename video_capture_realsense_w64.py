@@ -4,6 +4,10 @@ import cv2
 import time
 import os
 
+# should install pyrealsense and cv2 pip
+# pip install pyrealsense2 
+# pip install opencv-python 
+
 # Initialize RealSense pipeline
 pipeline = rs.pipeline()
 config = rs.config()
