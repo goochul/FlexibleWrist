@@ -213,10 +213,6 @@ def start_gravity_compensation():
     data_saved.wait()  # Wait until data is saved before exiting
     os._exit(0)
 
-# Save and plot data in a separate thread
-def save_and_plot_data():
-    data_folder = save_data_to_csv()
-    plot_merged_data(data_folder)
 
 # Save and plot data in a separate thread, then signal completion
 def save_and_plot_data():

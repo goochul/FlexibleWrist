@@ -7,7 +7,7 @@ import os
 # Initialize RealSense pipeline with retries
 pipeline = rs.pipeline()
 config = rs.config()
-config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)  # Adjust resolution and framerate as needed
+config.enable_stream(rs.stream.color, 960, 540, rs.format.bgr8, 30)  # Adjust resolution and framerate as needed
 
 max_retries = 5
 retry_count = 0
@@ -26,10 +26,10 @@ else:
     exit(1)
 
 # Set up video writer
-output_filename = 'realsense_recording.avi'
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
+output_filename = 'realsense_recording.mp4'
+fourcc = cv2.VideoWriter_fourcc(*'H264')
 frame_rate = 30  # Set the desired frame rate
-out = cv2.VideoWriter(output_filename, fourcc, frame_rate, (640, 480))
+out = cv2.VideoWriter(output_filename, fourcc, frame_rate, (960, 540))
 
 # Set recording duration
 record_duration = 50  # Set the recording duration in seconds
