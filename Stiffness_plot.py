@@ -71,7 +71,7 @@ else:
         plt.grid(True)
         
         # Save the figure
-        plt.savefig('stiffness_plot.png')
+        plt.savefig('data/20241110/Step3_30mm/stiffness_plot.png')
         
         # Show the plot
         plt.show()
