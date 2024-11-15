@@ -125,7 +125,7 @@ def move_to_position(robot_interface, target_positions, controller_cfg):
 
             z_positions.append(current_ee_position[2] - initial_z_position)
             timestamps.append(time.time() - global_start_time)
-            if np.max(np.abs(np.array(robot_interface._state_buffer[-1].q) - np.array(target_positions))) < 1e-3 or (time.time() - start_time > 10):
+            if np.max(np.abs(np.array(robot_interface._state_buffer[-1].q) - np.array(target_positions))) < 1e-3 or (time.time() - start_time > 20):
                 break
         robot_interface.control(controller_type="JOINT_POSITION", action=action, controller_cfg=controller_cfg)
         time.sleep(0.05)

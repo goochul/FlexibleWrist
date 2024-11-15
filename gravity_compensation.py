@@ -35,6 +35,7 @@ def start_gravity_compensation(robot_interface, controller_type, controller_cfg)
         logger.warning("Robot state not received")
         time.sleep(0.5)
     print("Starting gravity compensation at the current position...")
+    # breakpoint()
     time_stamps, z_positions = osc_move(robot_interface, controller_type, controller_cfg, num_steps=500)
     # Plot the z-axis with time
     plt.figure()
@@ -50,6 +51,11 @@ def main():
     robot_interface = FrankaInterface(config_root + f"/{args.interface_cfg}", use_visualizer=False)
     controller_type = args.controller_type
     controller_cfg = get_default_controller_config(controller_type)
+    
+    # Ben 
+    # controller_cfg.Kp.translation = 0.0
+    # controller_cfg.Kp.rotation = 0.0
+
     while robot_interface.state_buffer_size == 0:
         logger.warning("Robot state not received")
         time.sleep(0.5)
