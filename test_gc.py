@@ -79,12 +79,13 @@ for _ in range(40):
     robot_interface.control(controller_type="JOINT_IMPEDANCE", 
                             action=action, 
                             controller_cfg=joint_controller_cfg)
+    print('joint impedance control run')
     time.sleep(0.05)
 
 
 print('osc start')
-osc_controller_cfg.Kp.translation = 0.0
-osc_controller_cfg.Kp.rotation = 0.0
+# osc_controller_cfg.Kp.translation = 0.0
+# osc_controller_cfg.Kp.rotation = 0.0
 action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0] + [-1.0])
 for _ in range(200):
     robot_interface.control(controller_type="OSC_POSE", 
