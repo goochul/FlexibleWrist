@@ -26,7 +26,7 @@ timestamps = []
 global_start_time = None
 force_sensor = None
 initial_z_position = None
-max_samples = 3000
+max_samples = 2000
 force_threshold = 50
 torque_threshold = 5
 force_max = 20  # Set the force_max threshold here
@@ -132,14 +132,14 @@ def monitor_ft_sensor(robot_interface, joint_controller_cfg, osc_controller_type
                 return
 
             # Short delay for smoother monitoring
-            time.sleep(0.01)
+            time.sleep(0.001)
 
     except Exception as e:
         print(f"Error in monitor_ft_sensor: {e}")
 
 
 # Video recording function using RealSense camera
-def record_video(output_path, duration=90, fps=30):
+def record_video(output_path, duration=60, fps=30):
     print("Recording")
 
     # Configure depth and color streams
@@ -196,10 +196,16 @@ def get_end_effector_position(robot_interface):
 def get_joint_data(robot_interface):
     return robot_interface._state_buffer[-1].q, robot_interface._state_buffer[-1].dq
 
-def move_to_position(robot_interface, target_positions, controller_cfg):
-    global initial_z_position
+# Add this global variable
+event_markers = []
+
+def move_to_position(robot_interface, target_positions, controller_cfg, event_label=None):
+    global initial_z_position, event_markers
     action = list(target_positions) + [-1.0]
     start_time = time.time()
+
+    if event_label:
+        event_markers.append((time.time() - global_start_time, event_label))  # Log the event
 
     while True:
         # Check if the stop signal is set before and after sending commands
@@ -234,7 +240,6 @@ def move_to_position(robot_interface, target_positions, controller_cfg):
 
         time.sleep(0.01)
 
-
 def joint_position_control(robot_interface, controller_cfg):
     reset_joint_positions = [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
     des_joint_positions = [-0.00749242,  0.54708303, -0.0248903,  -2.16802759, -0.02433914,  4.30569219,  0.76901974]
@@ -253,13 +258,14 @@ def joint_position_control(robot_interface, controller_cfg):
     if stop_movement.is_set():
         return
     time.sleep(1)
-    move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg)
+    #event label = 1 => loading phase. 2 => unloading phase
+    move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg, event_label="1")
     if stop_movement.is_set():
         return
-    move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg)
     # move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg)
     # move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg)
-    move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg)
+    # move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg)
+    move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg, event_label="2")
     movement_done.set()
 
 # Gravity Compensation Function
@@ -286,13 +292,23 @@ def save_data_to_csv():
     force_df = pd.DataFrame(force_data, columns=["Timestamp", "Force Magnitude"])
     force_df.to_csv(os.path.join(data_folder, "force_data.csv"), index=False)
 
-    z_pos_df = pd.DataFrame({"Timestamp": timestamps, "Z Position": z_positions})
+    z_pos_df = pd.DataFrame({"Timestamp": timestamps, "Z Position": z_positions, "Event": None})
+
+    for timestamp, event in event_markers:
+        closest_index = (z_pos_df["Timestamp"] - timestamp).abs().idxmin()  # Find the closest timestamp
+        z_pos_df.loc[closest_index, "Event"] = event
+
     z_pos_df.to_csv(os.path.join(data_folder, "z_position_data.csv"), index=False)
+
 
     if joint_positions:
         num_joints = len(joint_positions[0]) if isinstance(joint_positions[0], (list, np.ndarray)) else 1
         joint_pos_df = pd.DataFrame(joint_positions, columns=[f"Joint {i+1} Position" for i in range(num_joints)])
         joint_pos_df.to_csv(os.path.join(data_folder, "joint_positions.csv"), index=False)
+
+    if torque_data:
+        torque_df = pd.DataFrame(torque_data, columns=["Timestamp", "Torque Magnitude"])
+        torque_df.to_csv(os.path.join(data_folder, "torque_data.csv"), index=False)
 
     print(f"Data saved to folder: {data_folder}")
     return data_folder
@@ -313,7 +329,7 @@ def plot_merged_data(data_folder):
 
     if timestamps:
         ax2 = ax1.twinx()
-        ax2.plot(timestamps, z_positions, label="Z Position", color='tab:red', marker='o', markersize=4)
+        ax2.plot(timestamps, z_positions, label="Z Position", color='tab:red', marker='o', markersize=2)
         ax2.set_ylabel("End-Effector Z Position (m)", color='tab:red')
         ax2.set_ylim([-0.05, 0.05])
         ax2.legend(loc="upper right")
@@ -367,7 +383,7 @@ def main():
 
     # Start video recording thread
     video_output_path = os.path.join(data_folder, "realsense_recording.mp4")
-    video_thread = threading.Thread(target=record_video, args=(video_output_path, 90, 30), daemon=True)
+    video_thread = threading.Thread(target=record_video, args=(video_output_path, 60, 30), daemon=True)
     video_thread.start()
 
     # Start monitoring thread
