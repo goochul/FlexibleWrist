@@ -97,10 +97,10 @@ time_plot_path = file_PATH / "force_displacement_plot_with_LPF_Line.png"
 plt.title("Filtered Force Magnitude and Z Position Over Time")
 
 # Show the plot
-# plt.show()
+plt.show()
 
 # Save the plot (optional)
-plt.savefig(time_plot_path, dpi=300)
-plt.close(fig)
+# plt.savefig(time_plot_path, dpi=300)
+# plt.close(fig)
 
-print(f"Plot saved as '{time_plot_path}'.")
+# print(f"Plot saved as '{time_plot_path}'.")

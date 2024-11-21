@@ -5,7 +5,7 @@ from scipy.signal import butter, filtfilt
 from pathlib import Path
 
 # Centralized PATH variable
-file_PATH = Path('data/20241117/10N_force_threshold')
+file_PATH = Path('data/20241118/0.01_1')
 
 # Load the data
 force_data = pd.read_csv(file_PATH / 'force_data.csv')
