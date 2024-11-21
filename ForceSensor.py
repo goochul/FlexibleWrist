@@ -77,36 +77,38 @@ class ForceSensor:
         print("Force sensor setup complete, running mode activated.")
 
     def get_force_obs(self):
-        # Start data sync and CRC checks
+        """
+        Reads force and torque data from the sensor with header synchronization and CRC checks.
+        """
         self._ser.flushInput()
-        self._ser.flushOutput()
         frame_synced = False
         crc16X25Configuration = Configuration(16, 0x1021, 0xFFFF, 0xFFFF, True, True)
         crc_calculator = Calculator(crc16X25Configuration)
+        MAX_RESYNC_ATTEMPTS = 10
+        attempt_count = 0
 
-        # Attempt to synchronize with the frame header
-        while not frame_synced and not self._pd_thread_stop_event.is_set():
+        while not frame_synced and attempt_count < MAX_RESYNC_ATTEMPTS:
             possible_header = self._ser.read(1)
             if self.FRAME_HEADER == possible_header:
                 data_frame = self._ser.read(34)
                 crc16_ccitt_frame = self._ser.read(2)
-                crc16_ccitt = struct.unpack_from('H', crc16_ccitt_frame, 0)[0]
-                checksum = crc_calculator.checksum(data_frame)
-                if checksum == crc16_ccitt:
-                    frame_synced = True
-                else:
-                    print("CRC mismatch - resyncing.")
-                    self._ser.read(1)  # Skip a byte and try again
+                try:
+                    crc16_ccitt = struct.unpack_from('H', crc16_ccitt_frame, 0)[0]
+                    checksum = crc_calculator.checksum(data_frame)
+                    if checksum == crc16_ccitt:
+                        frame_synced = True
+                    else:
+                        print(f"CRC mismatch. Expected: {crc16_ccitt}, Got: {checksum}. Resyncing...")
+                except struct.error:
+                    print("Failed to unpack CRC data.")
             else:
-                # print("Incorrect header byte received, resyncing.")
-                self._ser.read(1)  # Skip a byte and retry
+                print(f"Incorrect header byte received: {possible_header.hex()}. Resyncing...")
+            attempt_count += 1
 
-        # If synchronized, read the data frame
         if not frame_synced:
-            print("Failed to sync with sensor data frame.")
+            print("Failed to sync after multiple attempts.")
             return self.prev_force, np.zeros(3)
 
-        # Extract force and torque values
         try:
             Fx = struct.unpack_from('f', data_frame, 2)[0]
             Fy = struct.unpack_from('f', data_frame, 6)[0]
@@ -115,19 +117,15 @@ class ForceSensor:
             My = struct.unpack_from('f', data_frame, 18)[0]
             Mz = struct.unpack_from('f', data_frame, 22)[0]
 
-            # Apply offsets to force and torque readings
             self.prev_force = np.array([Fx, Fy, Fz]) - self.force_offset
             self.prev_torque = np.array([Mx, My, Mz]) - self.torque_offset
-
-            # Print adjusted values to confirm offsets are applied
-            # print(f"Raw force: {[Fx, Fy, Fz]}, Offset: {self.force_offset}, Adjusted force: {self.prev_force}")
-            # print(f"Raw torque: {[Mx, My, Mz]}, Offset: {self.torque_offset}, Adjusted torque: {self.prev_torque}")
 
             return self.prev_force, self.prev_torque
 
         except struct.error as e:
             print(f"Data unpacking error: {e}")
             return self.prev_force, np.zeros(3)
+
 
 
     @staticmethod

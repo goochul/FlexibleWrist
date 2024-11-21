@@ -132,7 +132,7 @@ def monitor_ft_sensor(robot_interface, joint_controller_cfg, osc_controller_type
                 return
 
             # Short delay for smoother monitoring
-            time.sleep(0.001)
+            time.sleep(0.002)
 
     except Exception as e:
         print(f"Error in monitor_ft_sensor: {e}")
@@ -242,7 +242,7 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
 
 def joint_position_control(robot_interface, controller_cfg):
     reset_joint_positions = [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
-    des_joint_positions = [-0.00749242,  0.54708303, -0.0248903,  -2.16802759, -0.02433914,  4.30569219,  0.76901974]
+    des_joint_positions = [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
 
     # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]              # Alimunum Frame origin for Panda
     # [-0.00767597,  0.51022177, -0.02485,    -2.17755938, -0.02581892,  4.27849113,  0.76947171]   # -10mm

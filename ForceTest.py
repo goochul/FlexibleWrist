@@ -1,7 +1,7 @@
 from ForceSensor import ForceSensor
 import numpy as np
+import pandas as pd
 import time
-import matplotlib.pyplot as plt
 
 # Calibration function
 def calibrate_force_sensor(sensor, num_samples=100, sleep_time=0.01):
@@ -21,63 +21,43 @@ def calibrate_force_sensor(sensor, num_samples=100, sleep_time=0.01):
     print(f"Calibration complete.\nForce Offset: {force_offset}, Torque Offset: {torque_offset}")
     return force_offset, torque_offset
 
-# Real-time data reading and plotting
-def read_force_sensor(sensor, force_offset, torque_offset, duration=10):
-    plt.ion()  # Enable interactive mode
-    fig, axs = plt.subplots(2, 1, figsize=(10, 8))
-
-    axs[0].set_title("Real-time Force Data (Adjusted)")
-    axs[0].set_ylabel("Force (N)")
-    axs[0].set_xlabel("Time Step")
-    axs[0].legend(["Fx", "Fy", "Fz"], loc="upper right")
-    axs[0].grid()
-
-    axs[1].set_title("Real-time Torque Data (Adjusted)")
-    axs[1].set_ylabel("Torque (Nm)")
-    axs[1].set_xlabel("Time Step")
-    axs[1].legend(["Tx", "Ty", "Tz"], loc="upper right")
-    axs[1].grid()
-
+# Data reading function
+def read_force_sensor(sensor, force_offset, torque_offset, max_samples=3000):
     force_data = []
     torque_data = []
+    print(f"\nCollecting {max_samples} sensor data points:")
 
-    print("\nCollecting and visualizing sensor data:")
-    start_time = time.time()
-    while time.time() - start_time < duration:
+    for _ in range(max_samples):
         try:
             raw_force, raw_torque = sensor.get_force_obs()
             adjusted_force = raw_force - force_offset
             adjusted_torque = raw_torque - torque_offset
 
-            force_data.append(adjusted_force)
-            torque_data.append(adjusted_torque)
+            # Calculate magnitudes
+            force_magnitude = np.linalg.norm(adjusted_force)
+            torque_magnitude = np.linalg.norm(adjusted_torque)
 
-            # Update the plots
-            axs[0].cla()
-            axs[0].set_title("Real-time Force Data (Adjusted)")
-            axs[0].set_ylabel("Force (N)")
-            axs[0].set_xlabel("Time Step")
-            axs[0].grid()
-            axs[0].plot(np.array(force_data), label=["Fx", "Fy", "Fz"])
-            axs[0].legend(loc="upper right")
+            # Append data
+            force_data.append(list(adjusted_force) + [force_magnitude])
+            torque_data.append(list(adjusted_torque) + [torque_magnitude])
 
-            axs[1].cla()
-            axs[1].set_title("Real-time Torque Data (Adjusted)")
-            axs[1].set_ylabel("Torque (Nm)")
-            axs[1].set_xlabel("Time Step")
-            axs[1].grid()
-            axs[1].plot(np.array(torque_data), label=["Tx", "Ty", "Tz"])
-            axs[1].legend(loc="upper right")
-
-            plt.pause(0.01)  # Refresh plot
-            print(f"Force: {adjusted_force}, Torque: {adjusted_torque}")
+            print(f"Force: {adjusted_force}, Magnitude: {force_magnitude}")
+            print(f"Torque: {adjusted_torque}, Magnitude: {torque_magnitude}")
 
         except Exception as e:
             print(f"Error during data collection: {e}")
             break
 
-    plt.ioff()  # Disable interactive mode
-    plt.show()
+    return force_data, torque_data
+
+# Save data to CSV
+def save_to_csv(force_data, torque_data, file_path="ft_sensor_data.csv"):
+    df = pd.DataFrame(
+        np.hstack((force_data, torque_data)),
+        columns=["Fx", "Fy", "Fz", "F_magnitude", "Tx", "Ty", "Tz", "T_magnitude"]
+    )
+    df.to_csv(file_path, index=False)
+    print(f"Data saved to {file_path}")
 
 # Main function
 def main():
@@ -90,8 +70,11 @@ def main():
         print("Calibration failed. Exiting...")
         return
 
-    # Data reading and visualization phase
-    read_force_sensor(sensor, force_offset, torque_offset, duration=20)
+    # Data reading phase
+    force_data, torque_data = read_force_sensor(sensor, force_offset, torque_offset, max_samples=3000)
+
+    # Save data to CSV
+    save_to_csv(force_data, torque_data)
 
 if __name__ == "__main__":
     main()
