@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 # Centralized file path
-file_PATH = Path('data/20241118/0.01_2')
+file_PATH = Path('data/20241118/0.01_3')
 
 # Load the data
 force_data = pd.read_csv(file_PATH / 'force_data.csv')

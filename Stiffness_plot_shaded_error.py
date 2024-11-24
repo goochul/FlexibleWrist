@@ -4,9 +4,11 @@ from pathlib import Path
 
 # List of directories to process
 file_paths = [
-    Path('data/20241118/0.01_1'),
+    # Path('data/20241118/0.01_1'),
     Path('data/20241118/0.01_2'),
-    Path('data/20241118/0.01_3')
+    Path('data/20241118/0.01_3'),
+    Path('data/20241118/0.001_2'),
+    Path('data/20241118/0.001_3')
 ]
 
 # Initialize lists to store loading and unloading data from all files
@@ -48,7 +50,7 @@ for file_path in file_paths:
     unloading_forces.append(unloading_data["Force Magnitude"].values)
 
 # Define a function to align, shift, and calculate mean and std deviation
-def calculate_shaded_error(z_positions, forces, shift=0.002):
+def calculate_shaded_error(z_positions, forces, shift=0.0018):
     # Determine the smallest length to align all data
     min_length = min(len(z) for z in z_positions)
 
@@ -76,6 +78,9 @@ mean_z_unloading, mean_force_unloading, std_force_unloading = calculate_shaded_e
 # Plot shaded error plots for loading and unloading phases
 plt.figure(figsize=(10, 6))
 
+# Plot shaded error plots for loading and unloading phases
+plt.figure(figsize=(10, 6))
+
 # Plot loading phase
 plt.plot(mean_z_loading, mean_force_loading, label="Loading (Mean)", color='red')
 plt.fill_between(mean_z_loading, mean_force_loading - std_force_loading, mean_force_loading + std_force_loading,
@@ -86,6 +91,16 @@ plt.plot(mean_z_unloading, mean_force_unloading, label="Unloading (Mean)", color
 plt.fill_between(mean_z_unloading, mean_force_unloading - std_force_unloading, mean_force_unloading + std_force_unloading,
                  color='blue', alpha=0.3, label="Unloading (Std Dev)")
 
+# Plot the green dashed line
+green_line_x = [0, 0.01, 0.0155]
+green_line_y = [0, 11, 11]
+plt.plot(green_line_x, green_line_y, color='green', linestyle='--', linewidth=2, label="Desired Traj")
+
+# Plot the green dashed line
+yellow_line_x = [0, 0.0059, 0.0155]
+yellow_line_y = [0, 10.5, 10.5]
+plt.plot(yellow_line_x, yellow_line_y, color='orange', linestyle='--', linewidth=2, label="Pressing Test Result Traj")
+
 # Label and title the plot
 plt.xlabel("Z Position (m)")
 plt.ylabel("Force Magnitude (N)")
@@ -94,7 +109,7 @@ plt.legend()
 plt.grid(True)
 
 # Save the figure
-save_path = Path('data/20241118/shaded_error_plot_shifted.png')
+save_path = Path('data/20241118/shaded_error_plot_shifted_with_target_line.png')
 plt.savefig(save_path)
 
 # Show the plot
