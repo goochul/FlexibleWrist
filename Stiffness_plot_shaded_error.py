@@ -48,7 +48,7 @@ for file_path in file_paths:
     unloading_forces.append(unloading_data["Force Magnitude"].values)
 
 # Define a function to align, shift, and calculate mean and std deviation
-def calculate_shaded_error(z_positions, forces, shift=0.002):
+def calculate_shaded_error(z_positions, forces, shift=0.0019):
     # Determine the smallest length to align all data
     min_length = min(len(z) for z in z_positions)
 
