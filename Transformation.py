@@ -56,7 +56,7 @@ print(f"Rotation Angle between End-Effector and Base Frame (radians): {rotation_
 print(f"Rotation Angle between End-Effector and Base Frame (degrees): {np.degrees(rotation_angle)}")
 
 # Step 2: Desired end-effector position (move -0.1m in z-direction)
-desired_position = initial_position + np.array([-0.0, -0.0, 0.005])
+desired_position = initial_position + np.array([-0.0, -0.0, 0.012])
 desired_orientation = initial_orientation
 
 # Inverse Kinematics Cost Function
@@ -78,7 +78,8 @@ result = minimize(
 # Extract the optimized joint angles
 if result.success:
     optimized_joint_positions = result.x
-    print(f"Optimized Joint Positions: {optimized_joint_positions}")
+    formatted_positions = [f"{angle:.7f}" for angle in optimized_joint_positions]
+    print(f"Optimized Joint Positions: [{', '.join(formatted_positions)}]")
 else:
     print("Inverse kinematics optimization failed.")
 

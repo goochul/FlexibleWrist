@@ -44,7 +44,7 @@ def initialize_force_sensor_for_calibration():
     Initialize the sensor for calibration without applying offsets.
     """
     try:
-        sensor = ForceSensor("/dev/ttyUSB0", np.zeros(3), np.zeros(3))
+        sensor = ForceSensor("/dev/ttyUSB1", np.zeros(3), np.zeros(3))
         sensor.force_sensor_setup()
         print("Sensor initialized for calibration.")
         return sensor
