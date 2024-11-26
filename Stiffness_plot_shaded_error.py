@@ -4,6 +4,7 @@ from pathlib import Path
 # List of directories to process
 file_paths = [
     # Path('data/20241118/0.01_1'),
+
     # Path('data/20241118/0.01_2'),
     # Path('data/20241118/0.01_3'),
     # Path('data/20241118/0.001_2'),
@@ -48,8 +49,12 @@ for file_path in file_paths:
     unloading_forces.append(unloading_data["Force Magnitude"].values)
 # Define a function to align, shift, and calculate mean and std deviation
 <<<<<<< HEAD
+<<<<<<< HEAD
 def calculate_shaded_error(z_positions, forces, shift=0.0019):
 =======
+=======
+
+>>>>>>> 3f4da9453c702faaa24a7c90bf8b3e3adc124d8d
 def calculate_shaded_error(z_positions, forces, shift=0.0000, shiftdown=0.4):
     """
     Calculate the shaded error with a specified shift for Z positions and downward adjustment for forces.
@@ -65,7 +70,11 @@ def calculate_shaded_error(z_positions, forces, shift=0.0000, shiftdown=0.4):
         mean_force (pd.Series): Mean of aligned and shifted forces.
         std_force (pd.Series): Standard deviation of aligned and shifted forces.
     """
+<<<<<<< HEAD
 >>>>>>> refs/remotes/origin/main
+=======
+
+>>>>>>> 3f4da9453c702faaa24a7c90bf8b3e3adc124d8d
     # Determine the smallest length to align all data
     min_length = min(len(z) for z in z_positions)
 
@@ -105,6 +114,9 @@ _unloading = std_force_unloading.to_numpy() if isinstance(std_force_unloading, p
 # Now plot as before
 plt.figure(figsize=(10, 6))
 
+# Plot shaded error plots for loading and unloading phases
+plt.figure(figsize=(10, 6))
+
 # Plot loading phase
 plt.plot(mean_z_loading, mean_force_loading, label="Loading (Mean)", color='red')
 plt.fill_between(mean_z_loading, mean_force_loading - std_force_loading, mean_force_loading + std_force_loading,
@@ -119,6 +131,7 @@ plt.fill_between(mean_z_unloading, mean_force_unloading - std_force_unloading, m
 green_line_x = [0, 0.01, 0.0155]
 green_line_y = [0, 11, 11]
 plt.plot(green_line_x, green_line_y, color='green', linestyle='--', linewidth=2, label="Desired Traj")
+
 # Plot the green dashed line
 yellow_line_x = [0, 0.0059, 0.0155]
 yellow_line_y = [0, 10.5, 10.5]
