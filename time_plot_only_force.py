@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 # Centralized PATH variable
-file_PATH = Path('data/20241118/154801')
+file_PATH = Path('data/20241124/174523')
 
 # Load the data
 force_data = pd.read_csv(file_PATH / 'force_data.csv')
@@ -40,10 +40,10 @@ time_plot_path = file_PATH / "pure_force.png"
 plt.title("Force Magnitude Over Time")
 
 # Show the plot
-# plt.show()
+plt.show()
 
 # Save the plot (optional)
-plt.savefig(time_plot_path, dpi=300)
-plt.close(fig)
+# plt.savefig(time_plot_path, dpi=300)
+# plt.close(fig)
 
-print(f"Plot saved as '{time_plot_path}'.")
+# print(f"Plot saved as '{time_plot_path}'.")

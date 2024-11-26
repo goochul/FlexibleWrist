@@ -1,26 +1,40 @@
 import cv2
 import time
+import os
 
-# Set up the video capture
-cap = cv2.VideoCapture(0)  # Use the default webcam
+# Specify the camera index for Nexigo (update this based on your system, e.g., 6 or 7)
+camera_index = 0  # Replace with the correct index for your Nexigo camera
+
+# Set up the video capture for Nexigo camera
+cap = cv2.VideoCapture(camera_index)
+if not cap.isOpened():
+    print(f"Failed to open the Nexigo camera at /dev/video{camera_index}.")
+    exit()
+
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 frame_rate = 30  # Desired frame rate
 
 # Set up the codec and output file name
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-output_filename = 'webcam_recording.avi'
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+output_filename = 'nexigo_camera_recording.mp4'
 out = cv2.VideoWriter(output_filename, fourcc, frame_rate, (frame_width, frame_height))
+
+if not out.isOpened():
+    print("Failed to initialize the VideoWriter.")
+    cap.release()
+    exit()
 
 # Start time of the recording
 start_time = time.time()
 record_duration = 60  # Duration in seconds
 
-print("Recording... Press 'q' to stop early.")
+print(f"Recording from Nexigo camera (/dev/video{camera_index})... Press 'q' to stop early.")
 
 while True:
     ret, frame = cap.read()
     if not ret:
+        print("Failed to capture frame.")
         break
 
     # Write the frame to the output file

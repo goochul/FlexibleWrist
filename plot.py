@@ -71,5 +71,6 @@ def plot_ft_sensor_data(file_path):
 
 # Main function to plot
 if __name__ == "__main__":
-    file_path = "ft_sensor_data.csv"  # Replace with your file path
+    # file_path = "ft_sensor_data.csv"  # Replace with your file path
+    file_path = "data/20241123/195358/ft_sensor_data.csv"  # Replace with your file path
     plot_ft_sensor_data(file_path)

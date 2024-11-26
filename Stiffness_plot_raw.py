@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 # Centralized file path
-file_PATH = Path('data/20241118/0.01_2')
+file_PATH = Path('data/20241124/174523/')
 
 # Load the data
 force_data = pd.read_csv(file_PATH / 'force_data.csv')
@@ -38,7 +38,7 @@ else:
     filtered_data['Z Position'] = filtered_data['Z Position'] - z_position_shift
 
     # Apply force threshold to detect the beginning of significant loading
-    force_threshold = 14.3  # Threshold in Newtons
+    force_threshold = 5  # Threshold in Newtons
     above_threshold = filtered_data[filtered_data['Force Magnitude'] > force_threshold]
 
     if above_threshold.empty:
