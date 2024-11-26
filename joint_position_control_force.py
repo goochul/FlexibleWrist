@@ -26,7 +26,7 @@ timestamps = []
 global_start_time = None
 force_sensor = None
 initial_z_position = None
-max_samples = 2000
+max_samples = 5000
 force_threshold = 50
 torque_threshold = 5
 force_max = 20  # Set the force_max threshold here
@@ -72,7 +72,7 @@ def initialize_force_sensor_for_calibration():
     Initialize the sensor for calibration without applying offsets.
     """
     try:
-        sensor = ForceSensor("/dev/ttyUSB0", np.zeros(3), np.zeros(3))
+        sensor = ForceSensor("/dev/ttyUSB1", np.zeros(3), np.zeros(3))
         sensor.force_sensor_setup()
         print("Sensor initialized for calibration.")
         return sensor
@@ -132,14 +132,14 @@ def monitor_ft_sensor(robot_interface, joint_controller_cfg, osc_controller_type
                 return
 
             # Short delay for smoother monitoring
-            time.sleep(0.002)
+            time.sleep(0.01)
 
     except Exception as e:
         print(f"Error in monitor_ft_sensor: {e}")
 
 
 # Video recording function using RealSense camera
-def record_video(output_path, duration=60, fps=30):
+def record_video(output_path, duration=30, fps=30):
     print("Recording")
 
     # Configure depth and color streams
@@ -227,7 +227,8 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
 
             # Check if the robot is close enough to the target positions
             position_error = np.abs(np.array(robot_interface._state_buffer[-1].q) - np.array(target_positions))
-            if np.max(position_error) < 1e-3 or (time.time() - start_time > 30):
+            if np.max(position_error) < 1e-3 or (time.time() - start_time > 90):
+            # if (time.time() - start_time > 30):
                 break
 
         # Send control action
@@ -241,10 +242,29 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         time.sleep(0.01)
 
 def joint_position_control(robot_interface, controller_cfg):
-    reset_joint_positions = [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
-    des_joint_positions = [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
+    reset_joint_positions = [-0.0081320, 0.4574915, -0.0243838, -2.1884906, -0.0256979, 4.2363219, 0.7690181]
+    # [-0.00757461,  0.47413217, -0.02512669, -2.18534287, -0.02667678,  4.2501711, 0.7698466 ]
+    # [-0.00805785,  0.46225722, -0.0245614,  -2.18755885, -0.02669979,  4.24048583, 0.76958523]
+    # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
+    des_joint_positions = [-0.00817453,  0.58435545, -0.02352894, -2.15726601, -0.01829912,  4.33055562,  0.76575631]
 
     # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]              # Alimunum Frame origin for Panda
+    # [-0.00767597,  0.51022177, -0.02485,    -2.17755938, -0.02581892,  4.27849113,  0.76947171]   # -10mm
+    # [-0.00744893,  0.52245477, -0.02512409, -2.17452938, -0.02589844,  4.28777901,  0.76955813]   # -15mm
+    # [-0.00764558,  0.534649,   -0.02463884, -2.17151983, -0.02343242,  4.29640372,  0.76849901]   # -20mm
+    # [-0.00749242,  0.54708303, -0.0248903,  -2.16802759, -0.02433914,  4.30569219,  0.76901974]   # -25mm
+    # [-0.00786796,  0.55953669, -0.0245075,  -2.16437121, -0.02514699,  4.31473024, 0.76914151]    # -30mm
+    # [-0.0075991,   0.57211732, -0.02482249, -2.1605095,  -0.02561976,  4.32375554,  0.76977484]   # -35mm
+    # [-0.00817004,  0.584347,   -0.02353005, -2.15728207, -0.01831063,  4.33053075,  0.76582103]   # -40mm
+    # [-0.00817453,  0.58435545, -0.02352894, -2.15726601, -0.01829912,  4.33055562,  0.76575631]   # -45mm
+
+
+    # Aluminum Frame Test data for BaRiFlex
+    # [-0.0079944, 0.4505116, -0.0247087, -2.1895460, -0.0272609, 4.2308043, 0.7698502]   # +15mm
+    # [-0.0081320, 0.4574915, -0.0243838, -2.1884906, -0.0256979, 4.2363219, 0.7690181]   # +12mm
+    # [-0.0080579, 0.4622572, -0.0245614, -2.1875589, -0.0266998, 4.2404858, 0.7695852]   # +10mm
+    # [-0.00805785,  0.46225722, -0.0245614,  -2.18755885, -0.02669979,  4.24048583, 0.76958523]    # +5mm
+    # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]     # touching
     # [-0.00767597,  0.51022177, -0.02485,    -2.17755938, -0.02581892,  4.27849113,  0.76947171]   # -10mm
     # [-0.00744893,  0.52245477, -0.02512409, -2.17452938, -0.02589844,  4.28777901,  0.76955813]   # -15mm
     # [-0.00764558,  0.534649,   -0.02463884, -2.17151983, -0.02343242,  4.29640372,  0.76849901]   # -20mm
@@ -383,7 +403,7 @@ def main():
 
     # Start video recording thread
     video_output_path = os.path.join(data_folder, "realsense_recording.mp4")
-    video_thread = threading.Thread(target=record_video, args=(video_output_path, 60, 30), daemon=True)
+    video_thread = threading.Thread(target=record_video, args=(video_output_path, 160, 30), daemon=True)
     video_thread.start()
 
     # Start monitoring thread
@@ -411,3 +431,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
