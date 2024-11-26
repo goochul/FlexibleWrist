@@ -5,7 +5,9 @@ from scipy.signal import butter, filtfilt
 from pathlib import Path
 
 # Centralized PATH variable
-file_PATH = Path('data/20241117/20N_force_threshold_35mm')
+# file_PATH = Path('data/20241117/20N_force_threshold_35mm')
+file_PATH = Path('data/20241124/190009/')
+
 
 # Load the data
 force_data = pd.read_csv(file_PATH / 'force_data.csv')
@@ -40,7 +42,7 @@ def low_pass_filter(data, cutoff, fs, order=4):
 
 # Parameters for the low-pass filter
 sampling_frequency = 100  # Assume 100 Hz sampling frequency
-cutoff_frequency = 10  # Low-pass filter cutoff frequency
+cutoff_frequency = 5  # Low-pass filter cutoff frequency
 
 # Apply the low-pass filter to the force data
 try:
