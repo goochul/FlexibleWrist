@@ -26,7 +26,7 @@ timestamps = []
 global_start_time = None
 force_sensor = None
 initial_z_position = None
-max_samples = 5000
+max_samples = 2800
 force_threshold = 50
 torque_threshold = 5
 force_max = 20  # Set the force_max threshold here
@@ -100,9 +100,9 @@ def monitor_ft_sensor(robot_interface, joint_controller_cfg, osc_controller_type
             force_magnitude = np.linalg.norm(adjusted_force)
             torque_magnitude = np.linalg.norm(adjusted_torque)
 
-            # Log the data
-            force_data.append((elapsed_time, force_magnitude))
-            torque_data.append((elapsed_time, torque_magnitude))
+            # Log the data with extra values
+            force_data.append((elapsed_time, *adjusted_force, force_magnitude))
+            torque_data.append((elapsed_time, *adjusted_torque, torque_magnitude))
 
             # Handle maximum force threshold
             if force_magnitude > force_max and not handling_threshold:
@@ -137,7 +137,6 @@ def monitor_ft_sensor(robot_interface, joint_controller_cfg, osc_controller_type
     except Exception as e:
         print(f"Error in monitor_ft_sensor: {e}")
 
-
 # Video recording function using RealSense camera
 def record_video(output_path, duration=30, fps=30):
     print("Recording")
@@ -165,8 +164,8 @@ def record_video(output_path, duration=30, fps=30):
             # Convert images to numpy arrays
             color_image = np.asanyarray(color_frame.get_data())
 
-            # Flip the frame vertically
-            flipped_image = cv2.flip(color_image, 0)
+            # Flip the frame both vertically and horizontally
+            flipped_image = cv2.flip(color_image, -1)
 
             # Write the flipped frame to the video file
             out.write(flipped_image)
@@ -227,7 +226,7 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
 
             # Check if the robot is close enough to the target positions
             position_error = np.abs(np.array(robot_interface._state_buffer[-1].q) - np.array(target_positions))
-            if np.max(position_error) < 1e-3 or (time.time() - start_time > 90):
+            if np.max(position_error) < 1e-3 or (time.time() - start_time > 40):
             # if (time.time() - start_time > 30):
                 break
 
@@ -242,11 +241,11 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         time.sleep(0.01)
 
 def joint_position_control(robot_interface, controller_cfg):
-    reset_joint_positions = [-0.0081320, 0.4574915, -0.0243838, -2.1884906, -0.0256979, 4.2363219, 0.7690181]
+    reset_joint_positions = [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
     # [-0.00757461,  0.47413217, -0.02512669, -2.18534287, -0.02667678,  4.2501711, 0.7698466 ]
     # [-0.00805785,  0.46225722, -0.0245614,  -2.18755885, -0.02669979,  4.24048583, 0.76958523]
     # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
-    des_joint_positions = [-0.00817453,  0.58435545, -0.02352894, -2.15726601, -0.01829912,  4.33055562,  0.76575631]
+    des_joint_positions = [-0.00786796,  0.55953669, -0.0245075,  -2.16437121, -0.02514699,  4.31473024, 0.76914151]
 
     # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]              # Alimunum Frame origin for Panda
     # [-0.00767597,  0.51022177, -0.02485,    -2.17755938, -0.02581892,  4.27849113,  0.76947171]   # -10mm
@@ -309,61 +308,120 @@ def save_data_to_csv():
     data_folder = os.path.join("data", date_folder, time_folder)
     os.makedirs(data_folder, exist_ok=True)
 
-    force_df = pd.DataFrame(force_data, columns=["Timestamp", "Force Magnitude"])
-    force_df.to_csv(os.path.join(data_folder, "force_data.csv"), index=False)
+    # Save force data with individual components and magnitude
+    if force_data:
+        force_df = pd.DataFrame(force_data, columns=["Timestamp", "Fx", "Fy", "Fz", "Force Magnitude"])
+        force_df.to_csv(os.path.join(data_folder, "force_data.csv"), index=False)
 
+    # Save z position data
     z_pos_df = pd.DataFrame({"Timestamp": timestamps, "Z Position": z_positions, "Event": None})
-
     for timestamp, event in event_markers:
         closest_index = (z_pos_df["Timestamp"] - timestamp).abs().idxmin()  # Find the closest timestamp
         z_pos_df.loc[closest_index, "Event"] = event
-
     z_pos_df.to_csv(os.path.join(data_folder, "z_position_data.csv"), index=False)
 
-
+    # Save joint positions
     if joint_positions:
         num_joints = len(joint_positions[0]) if isinstance(joint_positions[0], (list, np.ndarray)) else 1
         joint_pos_df = pd.DataFrame(joint_positions, columns=[f"Joint {i+1} Position" for i in range(num_joints)])
         joint_pos_df.to_csv(os.path.join(data_folder, "joint_positions.csv"), index=False)
 
+    # Save torque data with individual components, magnitude, and event
     if torque_data:
-        torque_df = pd.DataFrame(torque_data, columns=["Timestamp", "Torque Magnitude"])
+        torque_df = pd.DataFrame(torque_data, columns=["Timestamp", "Tx", "Ty", "Tz", "Torque Magnitude"])
         torque_df.to_csv(os.path.join(data_folder, "torque_data.csv"), index=False)
 
     print(f"Data saved to folder: {data_folder}")
     return data_folder
 
-# Plot Data without Display
+
 def plot_merged_data(data_folder):
-    fig, ax1 = plt.subplots()
+    # First Figure: Fx, Fy, Fz, Force Magnitude with Z-position
+    fig1, ax1 = plt.subplots()
 
     if force_data:
-        times, force_magnitudes = zip(*force_data)
-        ax1.plot(times, force_magnitudes, label="Force Magnitude", color='tab:blue')
+        times = [entry[0] for entry in force_data]  # Extract timestamps
+        Fx = [entry[1] for entry in force_data]    # Extract Fx
+        Fy = [entry[2] for entry in force_data]    # Extract Fy
+        Fz = [entry[3] for entry in force_data]    # Extract Fz
+        force_magnitudes = [entry[4] for entry in force_data]  # Extract force magnitudes
+
+        ax1.plot(times, Fx, label="Fx", color='tab:blue')
+        ax1.plot(times, Fy, label="Fy", color='tab:orange')
+        ax1.plot(times, Fz, label="Fz", color='tab:green')
+        ax1.plot(times, force_magnitudes, label="Force Magnitude", color='tab:red', linestyle='--')
+
+        # Calculate the limits dynamically
+        max_force_magnitude = max(abs(val) for val in force_magnitudes)
+        ax1.set_ylim([-(max_force_magnitude + 5), max_force_magnitude + 5])
+
     ax1.set_xlabel("Time (s)")
-    ax1.set_ylabel("Force Magnitude (N)", color='tab:blue')
-    ax1.set_xlim([0, max(timestamps) if timestamps else 1])
-    ax1.set_ylim([-25, 25])
+    ax1.set_ylabel("Force (N)")
     ax1.legend(loc="upper left")
     ax1.grid(True)
 
     if timestamps:
         ax2 = ax1.twinx()
-        ax2.plot(timestamps, z_positions, label="Z Position", color='tab:red', marker='o', markersize=2)
-        ax2.set_ylabel("End-Effector Z Position (m)", color='tab:red')
-        ax2.set_ylim([-0.05, 0.05])
+        ax2.plot(timestamps, z_positions, label="Z Position", color='tab:purple', marker='o', markersize=2)
+
+        # Calculate the limits dynamically for Z position
+        max_z_position = max(abs(val) for val in z_positions)
+        ax2.set_ylim([-max_z_position - 0.0025, max_z_position + 0.0025])
+
+        ax2.set_ylabel("Z Position (m)", color='tab:purple')
         ax2.legend(loc="upper right")
 
-    if torque_data:
-        times, torque_magnitudes = zip(*torque_data)  # Adjust for two elements
-        ax1.plot(times, torque_magnitudes, label="Torque Magnitude", color='tab:green', linestyle='--')
-        ax1.legend(loc="upper left")
+    plt.title("Forces (Fx, Fy, Fz, Magnitude) and Z-Position Over Time")
+    force_plot_path = os.path.join(data_folder, "force_plot.png")
+    plt.savefig(force_plot_path)
+    plt.show()
+    plt.close(fig1)
 
-    plt.title("Force Magnitude, Z Position of End-Effector, and Torque Magnitude Over Time")
-    plot_path = os.path.join(data_folder, "plot.png")
-    plt.savefig(plot_path)
-    plt.close(fig)
-    print(f"Plot saved to {plot_path}")
+    print(f"Force plot saved to {force_plot_path}")
+
+    # Second Figure: Tx, Ty, Tz, Torque Magnitude with Z-position
+    fig2, ax3 = plt.subplots()
+
+    if torque_data:
+        times = [entry[0] for entry in torque_data]  # Extract timestamps
+        Tx = [entry[1] for entry in torque_data]     # Extract Tx
+        Ty = [entry[2] for entry in torque_data]     # Extract Ty
+        Tz = [entry[3] for entry in torque_data]     # Extract Tz
+        torque_magnitudes = [entry[4] for entry in torque_data]  # Extract torque magnitudes
+
+        ax3.plot(times, Tx, label="Tx", color='tab:blue')
+        ax3.plot(times, Ty, label="Ty", color='tab:orange')
+        ax3.plot(times, Tz, label="Tz", color='tab:green')
+        ax3.plot(times, torque_magnitudes, label="Torque Magnitude", color='tab:red', linestyle='--')
+
+        # Calculate the limits dynamically
+        max_torque_magnitude = max(abs(val) for val in torque_magnitudes)
+        ax3.set_ylim([-(max_torque_magnitude + 5), max_torque_magnitude + 5])
+
+    ax3.set_xlabel("Time (s)")
+    ax3.set_ylabel("Torque (Nm)")
+    ax3.legend(loc="upper left")
+    ax3.grid(True)
+
+    if timestamps:
+        ax4 = ax3.twinx()
+        ax4.plot(timestamps, z_positions, label="Z Position", color='tab:purple', marker='o', markersize=2)
+
+        # Calculate the limits dynamically for Z position
+        max_z_position = max(abs(val) for val in z_positions)
+        ax4.set_ylim([-max_z_position - 0.0025, max_z_position + 0.0025])
+
+        ax4.set_ylabel("Z Position (m)", color='tab:purple')
+        ax4.legend(loc="upper right")
+
+    plt.title("Torques (Tx, Ty, Tz, Magnitude) and Z-Position Over Time")
+    torque_plot_path = os.path.join(data_folder, "torque_plot.png")
+    plt.savefig(torque_plot_path)
+    plt.show()
+    plt.close(fig2)
+
+    print(f"Torque plot saved to {torque_plot_path}")
+
 
 
 def main():
@@ -403,7 +461,7 @@ def main():
 
     # Start video recording thread
     video_output_path = os.path.join(data_folder, "realsense_recording.mp4")
-    video_thread = threading.Thread(target=record_video, args=(video_output_path, 160, 30), daemon=True)
+    video_thread = threading.Thread(target=record_video, args=(video_output_path, 90, 30), daemon=True)
     video_thread.start()
 
     # Start monitoring thread
