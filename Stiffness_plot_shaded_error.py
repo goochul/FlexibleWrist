@@ -48,13 +48,7 @@ for file_path in file_paths:
     unloading_z_positions.append(unloading_data["Z Position"].values)
     unloading_forces.append(unloading_data["Force Magnitude"].values)
 # Define a function to align, shift, and calculate mean and std deviation
-<<<<<<< HEAD
-<<<<<<< HEAD
-def calculate_shaded_error(z_positions, forces, shift=0.0019):
-=======
-=======
 
->>>>>>> 3f4da9453c702faaa24a7c90bf8b3e3adc124d8d
 def calculate_shaded_error(z_positions, forces, shift=0.0000, shiftdown=0.4):
     """
     Calculate the shaded error with a specified shift for Z positions and downward adjustment for forces.
@@ -70,11 +64,7 @@ def calculate_shaded_error(z_positions, forces, shift=0.0000, shiftdown=0.4):
         mean_force (pd.Series): Mean of aligned and shifted forces.
         std_force (pd.Series): Standard deviation of aligned and shifted forces.
     """
-<<<<<<< HEAD
->>>>>>> refs/remotes/origin/main
-=======
-
->>>>>>> 3f4da9453c702faaa24a7c90bf8b3e3adc124d8d
+    
     # Determine the smallest length to align all data
     min_length = min(len(z) for z in z_positions)
 
