@@ -64,7 +64,7 @@ def calculate_shaded_error(z_positions, forces, shift=0.0000, shiftdown=0.4):
         mean_force (pd.Series): Mean of aligned and shifted forces.
         std_force (pd.Series): Standard deviation of aligned and shifted forces.
     """
-
+    
     # Determine the smallest length to align all data
     min_length = min(len(z) for z in z_positions)
 

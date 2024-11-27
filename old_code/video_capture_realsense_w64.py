@@ -23,7 +23,7 @@ frame_rate = 30  # Set the desired frame rate
 out = cv2.VideoWriter(output_filename, fourcc, frame_rate, (640, 480))
 
 # Set recording duration
-record_duration = 10  # Set the recording duration in seconds
+record_duration = 100  # Set the recording duration in seconds
 start_time = time.time()
 
 print("Recording... Press 'q' to stop early.")
