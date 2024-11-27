@@ -3,7 +3,7 @@ import time
 import os
 
 # Specify the camera index for Nexigo (update this based on your system, e.g., 6 or 7)
-camera_index = 4  # Replace with the correct index for your Nexigo camera
+camera_index = 0  # Replace with the correct index for your Nexigo camera
 
 # Set up the video capture for Nexigo camera
 cap = cv2.VideoCapture(camera_index)
@@ -27,7 +27,7 @@ if not out.isOpened():
 
 # Start time of the recording
 start_time = time.time()
-record_duration = 60  # Duration in seconds
+record_duration = 150  # Duration in seconds
 
 print(f"Recording from Nexigo camera (/dev/video{camera_index})... Press 'q' to stop early.")
 

@@ -26,7 +26,7 @@ timestamps = []
 global_start_time = None
 force_sensor = None
 initial_z_position = None
-max_samples = 2800
+max_samples = 4400
 force_threshold = 50
 torque_threshold = 5
 force_max = 20  # Set the force_max threshold here
@@ -226,7 +226,7 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
 
             # Check if the robot is close enough to the target positions
             position_error = np.abs(np.array(robot_interface._state_buffer[-1].q) - np.array(target_positions))
-            if np.max(position_error) < 1e-3 or (time.time() - start_time > 40):
+            if np.max(position_error) < 1e-3 or (time.time() - start_time > 70):
             # if (time.time() - start_time > 30):
                 break
 
@@ -241,11 +241,11 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         time.sleep(0.01)
 
 def joint_position_control(robot_interface, controller_cfg):
-    reset_joint_positions = [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
+    reset_joint_positions = [-0.0080579, 0.4622572, -0.0245614, -2.1875589, -0.0266998, 4.2404858, 0.7695852]
     # [-0.00757461,  0.47413217, -0.02512669, -2.18534287, -0.02667678,  4.2501711, 0.7698466 ]
     # [-0.00805785,  0.46225722, -0.0245614,  -2.18755885, -0.02669979,  4.24048583, 0.76958523]
     # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
-    des_joint_positions = [-0.00786796,  0.55953669, -0.0245075,  -2.16437121, -0.02514699,  4.31473024, 0.76914151]
+    des_joint_positions = [-0.00817004,  0.584347,   -0.02353005, -2.15728207, -0.01831063,  4.33053075,  0.76582103]
 
     # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]              # Alimunum Frame origin for Panda
     # [-0.00767597,  0.51022177, -0.02485,    -2.17755938, -0.02581892,  4.27849113,  0.76947171]   # -10mm
@@ -459,10 +459,10 @@ def main():
     data_folder = os.path.join("data", date_folder, time_folder)
     os.makedirs(data_folder, exist_ok=True)
 
-    # Start video recording thread
-    video_output_path = os.path.join(data_folder, "realsense_recording.mp4")
-    video_thread = threading.Thread(target=record_video, args=(video_output_path, 90, 30), daemon=True)
-    video_thread.start()
+    # # Start video recording thread
+    # video_output_path = os.path.join(data_folder, "realsense_recording.mp4")
+    # video_thread = threading.Thread(target=record_video, args=(video_output_path, 150, 30), daemon=True)
+    # video_thread.start()
 
     # Start monitoring thread
     monitoring_thread = threading.Thread(
@@ -479,7 +479,7 @@ def main():
     # Wait for threads to finish
     monitoring_thread.join()
     movement_thread.join()
-    video_thread.join()  # Ensure video thread finishes
+    # video_thread.join()  # Ensure video thread finishes
 
     # Save and plot data after threads finish
     data_folder = save_data_to_csv()
