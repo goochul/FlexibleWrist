@@ -6,11 +6,11 @@ from scipy.stats import linregress
 import numpy as np
 
 # Centralized PATH variable
-# file_PATH = Path('data/20241126/155358/')
+file_PATH = Path('data/20241126/155358/')
 # file_PATH = Path('data/20241126/164849/')
 # file_PATH = Path('data/20241126/165145/')
 # file_PATH = Path('data/20241126/165511/')
-file_PATH = Path('data/20241126/165834/')
+# file_PATH = Path('data/20241126/165834/')
 
 # Load the data
 force_data = pd.read_csv(file_PATH / 'force_data.csv')
@@ -71,11 +71,13 @@ if touching_point_index is not None:
     touching_point_force = merged_data.loc[touching_point_index, 'Filtered Force Magnitude']
     touching_point_timestamp = merged_data.loc[touching_point_index, 'Timestamp']
     touching_point_z_position = merged_data.loc[touching_point_index, 'Z Position']
+    merged_data['Offset Z Position'] = merged_data['Z Position'] - touching_point_z_position
 
     print(f"Touching Point Index: {touching_point_index}")
     print(f"Touching Point Force: {touching_point_force:.2f} N")
     print(f"Touching Point Timestamp: {touching_point_timestamp:.2f}s")
     print(f"Touching Point Z Position: {touching_point_z_position:.5f} m")
+    print(f"Z-Position values offset by {touching_point_z_position:.5f} m.")
 else:
     print("No valid touching point detected based on slope minima.")
 
@@ -99,15 +101,15 @@ ax1_z = ax1.twinx()
 
 # Calculate the y-range for Z Position
 max_z_position = max(abs(val) for val in merged_data["Z Position"])
-z_position_range = [-max_z_position - 0.0025, max_z_position + 0.0025]
+z_position_range = [-0.03, 0.03]
 line2, = ax1_z.plot(
     merged_data["Timestamp"],
-    merged_data["Z Position"],
-    label="Z Position",
-    color='tab:red',
+    merged_data["Offset Z Position"],  # Use the offset column
+    label="Offset Z Position",
+    color='tab:purple',
     linestyle="--",
 )
-ax1_z.set_ylabel("Z Position (m)", color='tab:red')
+ax1_z.set_ylabel("Offset Z Position (m)", color='tab:purple')
 ax1_z.set_ylim(z_position_range)
 
 # Plot the slope on the same axis
