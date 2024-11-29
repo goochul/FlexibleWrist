@@ -104,8 +104,10 @@ plt.title("Stiffness vs Z Position")
 plt.legend()
 plt.grid(True)
 
-# Save and close the figure
-plt.savefig(stiffness_plot_path, dpi=300)
-plt.close()
+plt.show()
 
-print(f"Stiffness plot saved as '{stiffness_plot_path}'.")
+# # Save and close the figure
+# plt.savefig(stiffness_plot_path, dpi=300)
+# plt.close()
+
+# print(f"Stiffness plot saved as '{stiffness_plot_path}'.")

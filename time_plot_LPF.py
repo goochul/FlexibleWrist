@@ -6,7 +6,7 @@ from pathlib import Path
 
 # Centralized PATH variable
 # file_PATH = Path('data/20241117/20N_force_threshold_35mm')
-file_PATH = Path('data/20241124/190009/')
+file_PATH = Path('data/20241126/155358/')
 
 
 # Load the data
