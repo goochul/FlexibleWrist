@@ -125,25 +125,25 @@ if touching_point_index is not None:
     # Mark the vertical line on the force plot
     ax1.axvline(x=touching_point_timestamp, color='red', linestyle='--', label="Touching Point")
 
-    # Add text annotation near the touching point
-    ax1.text(
-        touching_point_timestamp + 2,
-        touching_point_force -1,  # Offset to avoid overlap with the line
-        f"Touching Point\nTime: {touching_point_timestamp:.2f}s\nZ: {touching_point_z_position:.5f} m",
-        color='red',
-        fontsize=10,
-        ha='left',
-        va='center',
-    )
+    # # Add text annotation near the touching point
+    # ax1.text(
+    #     touching_point_timestamp + 2,
+    #     touching_point_force -1,  # Offset to avoid overlap with the line
+    #     f"Touching Point\nTime: {touching_point_timestamp:.2f}s\nZ: {touching_point_z_position:.5f} m",
+    #     color='red',
+    #     fontsize=10,
+    #     ha='left',
+    #     va='center',
+    # )
 
-    # Add a red dot at the Z-Position value on the twin axis
-    ax1_z.plot(
-        touching_point_timestamp,
-        touching_point_z_position,
-        'o',  # Circle marker
-        color='red',
-        label="Touching Point (Z)",
-    )
+    # # Add a red dot at the Z-Position value on the twin axis
+    # ax1_z.plot(
+    #     touching_point_timestamp,
+    #     touching_point_z_position,
+    #     'o',  # Circle marker
+    #     color='red',
+    #     label="Touching Point (Z)",
+    # )
 
 # Add legend combining all lines
 ax1.legend(handles=[line1, line2, line3], loc="upper left")
@@ -170,7 +170,25 @@ ax2_z.set_ylim(z_position_range)
 # Mark the touching point on the non-filtered plot as well
 if touching_point_index is not None:
     ax2.axvline(x=touching_point_timestamp, color='red', linestyle='--', label="Touching Point")
-    ax2.text(touching_point_timestamp + 1, merged_data.loc[touching_point_index, 'Force Magnitude'], "Touching Point", color='red')
+       # Add text annotation near the touching point
+    ax2.text(
+        touching_point_timestamp + 2,
+        touching_point_force -1,  # Offset to avoid overlap with the line
+        f"Touching Point\nTime: {touching_point_timestamp:.2f}s\nZ: {touching_point_z_position:.5f} m",
+        color='red',
+        fontsize=10,
+        ha='left',
+        va='center',
+    )
+
+    # Add a red dot at the Z-Position value on the twin axis
+    ax2_z.plot(
+        touching_point_timestamp,
+        touching_point_z_position,
+        'o',  # Circle marker
+        color='red',
+        label="Touching Point (Z)",
+    )
 
 # Add legend and title for the raw data plot
 ax2.legend(handles=[line3, line4], loc="upper left")
