@@ -137,6 +137,10 @@ line3, = ax1.plot(
     color='orange',
 )
 
+# Draw the horizontal lines representing the slope thresholds
+ax1.axhline(y=initial_slope_threshold, color='grey', linestyle='-.', label=f"Initial Slope Threshold ({initial_slope_threshold})")
+ax1.axhline(y=slope_threshold, color='brown', linestyle=':', label=f"Slope Threshold ({slope_threshold})")
+
 # Mark the touching point if detected
 if touching_point_index is not None:
     # Mark the vertical line on the force plot
