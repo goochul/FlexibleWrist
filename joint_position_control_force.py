@@ -392,7 +392,7 @@ def plot_merged_data(data_folder):
         ax3.plot(times, Tx, label="Tx", color='tab:blue')
         ax3.plot(times, Ty, label="Ty", color='tab:orange')
         ax3.plot(times, Tz, label="Tz", color='tab:green')
-        ax3.plot(times, torque_magnitudes, label="Torque Magnitude", color='tab:red', linestyle='--')
+        ax3.plot(times, torque_magnitudes, label="Torque Magnitude", color='tab:red', linestyle='--', linewidth=1)
 
         # Calculate the limits dynamically
         max_torque_magnitude = max(abs(val) for val in torque_magnitudes)
