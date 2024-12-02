@@ -6,13 +6,11 @@ from scipy.stats import linregress
 import numpy as np
 
 # Centralized PATH variable
-# file_PATH = Path('data/20241126/155358/')
-# file_PATH = Path('data/20241126/164849/')
-# file_PATH = Path('data/20241126/165145/')
-# file_PATH = Path('data/20241126/165511/')
-# file_PATH = Path('data/20241126/165834/')
-
-file_PATH = Path('data/20241127/135820/')
+file_PATH = Path('data/20241127/134210/')
+# file_PATH = Path('data/20241127/134523/')
+# file_PATH = Path('data/20241127/134949/')
+# file_PATH = Path('data/20241127/135401/')
+# file_PATH = Path('data/20241127/135820/')
 
 # Load the data
 force_data = pd.read_csv(file_PATH / 'force_data.csv')
@@ -58,16 +56,33 @@ merged_data['Force Slope'] = 100 * merged_data['Filtered Force Magnitude'].rolli
     raw=False
 )
 
-# Find local minima in the slope
-slope_minima_indices = argrelextrema(merged_data['Force Slope'].values, np.less)[0]
+# Set the parameters
+initial_slope_threshold = 0.05  # Represents near-zero slope to identify starting point
+slope_threshold = 0.7           # The threshold that represents a significant increase
 
-# Select the first local minimum within the valid range of slopes
+# Initialize index values
+slope_threshold_index = None
 touching_point_index = None
-for idx in slope_minima_indices:
-    # Ensure slope is near-zero or slightly negative (e.g., between -0.05 and 0.05)
-    if -0.6 <= merged_data['Force Slope'].iloc[idx] <= 0.6:
-        touching_point_index = idx
+
+# Step 1: Find the index where slope exceeds the slope_threshold
+for idx in range(len(merged_data['Force Slope'])):
+    if merged_data['Force Slope'].iloc[idx] > slope_threshold:
+        slope_threshold_index = idx
         break
+
+# Step 2: Go backwards to find the closest point where slope is at or below the initial_slope_threshold
+if slope_threshold_index is not None:
+    for idx in range(slope_threshold_index, -1, -1):
+        if merged_data['Force Slope'].iloc[idx] <= initial_slope_threshold:
+            touching_point_index = idx
+            break
+
+# Output the results
+if touching_point_index is not None:
+    print(f"Touching point index found closest to the slope threshold index: {touching_point_index}")
+    print(f"Timestamp of touching point: {merged_data['Timestamp'].iloc[touching_point_index]}")
+else:
+    print("No touching point found where slope starts increasing.")
 
 if touching_point_index is not None:
     touching_point_force = merged_data.loc[touching_point_index, 'Filtered Force Magnitude']

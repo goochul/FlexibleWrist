@@ -7,13 +7,13 @@ import numpy as np
 import os
 
 # List of file paths
-file_paths = [
-    Path('data/20241126/155358/'),
-    Path('data/20241126/164849/'),
-    Path('data/20241126/165145/'),
-    Path('data/20241126/165511/'),
-    Path('data/20241126/165834/')
-]
+# file_paths = [
+#     Path('data/20241126/155358/'),
+#     Path('data/20241126/164849/'),
+#     Path('data/20241126/165145/'),
+#     Path('data/20241126/165511/'),
+#     Path('data/20241126/165834/')
+# ]
 
 # Low-pass filter function
 def low_pass_filter(data, cutoff, fs, order=4):
@@ -319,7 +319,7 @@ for ax in axs:
     ax.grid(True)
 
 # Save the figure
-plt.savefig('buckling_point_analysis.png', dpi=300, bbox_inches='tight')
+# plt.savefig('buckling_point_analysis.png', dpi=300, bbox_inches='tight')
 
 # Show the plot
 plt.tight_layout()
