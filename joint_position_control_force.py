@@ -26,7 +26,10 @@ timestamps = []
 global_start_time = None
 force_sensor = None
 initial_z_position = None
-max_samples = 4400
+max_samples = 5500
+video_duration = 175
+rs_camera_index = 4 
+Nexigo_camera_index = 6
 force_threshold = 50
 torque_threshold = 5
 force_max = 20  # Set the force_max threshold here
@@ -138,44 +141,43 @@ def monitor_ft_sensor(robot_interface, joint_controller_cfg, osc_controller_type
         print(f"Error in monitor_ft_sensor: {e}")
 
 # Video recording function using RealSense camera
-def record_video(output_path, duration=30, fps=30):
-    print("Recording")
+def record_video(output_path, duration, fps=30, camera_index=rs_camera_index):
+    print(f"Recording video using camera index {camera_index}.")
 
-    # Configure depth and color streams
-    pipeline = rs.pipeline()
-    config = rs.config()
-    config.enable_stream(rs.stream.color, 960, 540, rs.format.bgr8, 30)
+    # Initialize VideoCapture with the specified camera index
+    cap = cv2.VideoCapture(camera_index)
+    if not cap.isOpened():
+        print(f"Failed to open the camera at index {camera_index}.")
+        exit()
 
-    # Start streaming
-    pipeline.start(config)
+    # Get video properties
+    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     # Create a VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_path, fourcc, fps, (960, 540))
+    out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
 
     start_time = time.time()
     try:
         while time.time() - start_time < duration:
-            frames = pipeline.wait_for_frames()
-            color_frame = frames.get_color_frame()
-            if not color_frame:
-                continue
-
-            # Convert images to numpy arrays
-            color_image = np.asanyarray(color_frame.get_data())
+            ret, frame = cap.read()
+            if not ret:
+                print("Failed to capture frame. Exiting...")
+                break
 
             # Flip the frame both vertically and horizontally
-            flipped_image = cv2.flip(color_image, -1)
+            flipped_frame = cv2.flip(frame, -1)
 
             # Write the flipped frame to the video file
-            out.write(flipped_image)
+            out.write(flipped_frame)
 
             # Display the flipped frame (optional)
-            cv2.imshow('RealSense', flipped_image)
+            cv2.imshow('Camera', flipped_frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     finally:
-        pipeline.stop()
+        cap.release()
         out.release()
         cv2.destroyAllWindows()
 
@@ -226,8 +228,13 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
 
             # Check if the robot is close enough to the target positions
             position_error = np.abs(np.array(robot_interface._state_buffer[-1].q) - np.array(target_positions))
-            if np.max(position_error) < 1e-3 or (time.time() - start_time > 70):
+            if time.time() - start_time > 100:
             # if (time.time() - start_time > 30):
+                print("Timeout reached. Breaking loop.")
+                break
+            if np.max(position_error) < 1e-3:
+            # if (time.time() - start_time > 30):
+                print("Position error is small. Breaking loop.")
                 break
 
         # Send control action
@@ -246,6 +253,9 @@ def joint_position_control(robot_interface, controller_cfg):
     # [-0.00805785,  0.46225722, -0.0245614,  -2.18755885, -0.02669979,  4.24048583, 0.76958523]
     # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
     des_joint_positions = [-0.00817004,  0.584347,   -0.02353005, -2.15728207, -0.01831063,  4.33053075,  0.76582103]
+    
+    #BaRiFlex
+    # [-0.00817004,  0.584347,   -0.02353005, -2.15728207, -0.01831063,  4.33053075,  0.76582103]
 
     # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]              # Alimunum Frame origin for Panda
     # [-0.00767597,  0.51022177, -0.02485,    -2.17755938, -0.02581892,  4.27849113,  0.76947171]   # -10mm
@@ -281,6 +291,7 @@ def joint_position_control(robot_interface, controller_cfg):
     move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg, event_label="1")
     if stop_movement.is_set():
         return
+    
     # move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg)
     # move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg)
     # move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg)
@@ -349,7 +360,7 @@ def plot_merged_data(data_folder):
         ax1.plot(times, Fx, label="Fx", color='tab:blue')
         ax1.plot(times, Fy, label="Fy", color='tab:orange')
         ax1.plot(times, Fz, label="Fz", color='tab:green')
-        ax1.plot(times, force_magnitudes, label="Force Magnitude", color='tab:red', linestyle='--')
+        ax1.plot(times, force_magnitudes, label="Force Magnitude", color='tab:red', linestyle='--', linewidth=0.25)
 
         # Calculate the limits dynamically
         max_force_magnitude = max(abs(val) for val in force_magnitudes)
@@ -373,7 +384,7 @@ def plot_merged_data(data_folder):
 
     plt.title("Forces (Fx, Fy, Fz, Magnitude) and Z-Position Over Time")
     force_plot_path = os.path.join(data_folder, "force_plot.png")
-    plt.savefig(force_plot_path)
+    plt.savefig(force_plot_path, dpi=1000)
     plt.show()
     plt.close(fig1)
 
@@ -416,7 +427,7 @@ def plot_merged_data(data_folder):
 
     plt.title("Torques (Tx, Ty, Tz, Magnitude) and Z-Position Over Time")
     torque_plot_path = os.path.join(data_folder, "torque_plot.png")
-    plt.savefig(torque_plot_path)
+    plt.savefig(torque_plot_path, dpi=1000)
     plt.show()
     plt.close(fig2)
 
@@ -459,10 +470,10 @@ def main():
     data_folder = os.path.join("data", date_folder, time_folder)
     os.makedirs(data_folder, exist_ok=True)
 
-    # # Start video recording thread
-    # video_output_path = os.path.join(data_folder, "realsense_recording.mp4")
-    # video_thread = threading.Thread(target=record_video, args=(video_output_path, 150, 30), daemon=True)
-    # video_thread.start()
+    # Start video recording thread
+    video_output_path = os.path.join(data_folder, "realsense_recording.mp4")
+    video_thread = threading.Thread(target=record_video, args=(video_output_path, video_duration, 30, rs_camera_index), daemon=True)
+    video_thread.start()
 
     # Start monitoring thread
     monitoring_thread = threading.Thread(
@@ -479,7 +490,7 @@ def main():
     # Wait for threads to finish
     monitoring_thread.join()
     movement_thread.join()
-    # video_thread.join()  # Ensure video thread finishes
+    video_thread.join()  # Ensure video thread finishes
 
     # Save and plot data after threads finish
     data_folder = save_data_to_csv()
