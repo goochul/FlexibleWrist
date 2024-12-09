@@ -178,7 +178,7 @@ if valid_touching_times and valid_touching_z_positions:
 
     ax1 = axs[0]
     # Plot Filtered Force Magnitude
-    ax1.plot(mean_force.index, mean_force, label="Filtered Force Magnitude Mean", color='blue')
+    ax1.plot(mean_force.index.to_numpy(), mean_force.to_numpy(), label="Filtered Force Magnitude Mean", color='blue')
     ax1.fill_between(mean_force.index, mean_force - std_force, mean_force + std_force,
                      color='blue', alpha=0.3, label="Force Magnitude Std Dev")
     ax1.set_xlabel("Time (s)")
@@ -188,7 +188,7 @@ if valid_touching_times and valid_touching_z_positions:
 
     # Plot Offset Z Position
     ax2 = ax1.twinx()
-    ax2.plot(mean_z.index, mean_z, label="Offset Z Position Mean", color='red')
+    ax2.plot(mean_z.index.to_numpy(), mean_z.to_numpy(), label="Offset Z Position Mean", color='red')
     ax2.fill_between(mean_z.index, mean_z - std_z, mean_z + std_z,
                      color='red', alpha=0.3, label="Z Position Std Dev")
     ax2.set_ylabel("Offset Z Position (m)", color='red')
@@ -356,7 +356,7 @@ if valid_touching_times and valid_touching_z_positions:
 # Second Plot: Raw Force Magnitude and Non-Offset Z Position
 ax3 = axs[1]
 # Plot Raw Force Magnitude
-ax3.plot(mean_raw_force.index, mean_raw_force, label="Raw Force Magnitude Mean", color="green")
+ax3.plot(mean_raw_force.index.to_numpy(), mean_raw_force.to_numpy(), label="Raw Force Magnitude Mean", color="green")
 ax3.fill_between(mean_raw_force.index, mean_raw_force - std_raw_force, mean_raw_force + std_raw_force,
                  color="green", alpha=0.3, label="Raw Force Magnitude Std Dev")
 ax3.set_xlabel("Time (s)")
@@ -366,7 +366,7 @@ ax3.set_ylim([-15, 15])  # Adjusted for raw force range
 
 # Plot Non-Offset Z Position
 ax4 = ax3.twinx()
-ax4.plot(mean_raw_z_position.index, mean_raw_z_position, label="Non-Offset Z Position Mean", color="red", linestyle="--")
+ax4.plot(mean_raw_z_position.index.to_numpy(), mean_raw_z_position.to_numpy(), label="Non-Offset Z Position Mean", color="red", linestyle="--")
 ax4.fill_between(mean_raw_z_position.index, mean_raw_z_position - std_raw_z_position, mean_raw_z_position + std_raw_z_position,
                  color="red", alpha=0.3, label="Z Position Std Dev")
 ax4.set_ylabel("Z Position (m)", color="red")
