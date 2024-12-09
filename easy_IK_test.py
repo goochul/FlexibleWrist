@@ -4,6 +4,8 @@ from scipy.spatial.transform import Rotation as R
 # Create an instance of the FrankaEasyIK class
 ik = FrankaEasyIK()
 
+print(ik.robot)
+
 init_position = [ 0.46688291, -0.01258228,  0.40752645]
 init_orientation = [-1.54192905, -0.82459033, -1.59780517]
 
