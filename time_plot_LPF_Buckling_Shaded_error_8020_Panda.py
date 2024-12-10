@@ -199,6 +199,78 @@ if valid_touching_times and valid_touching_z_positions:
     ax1.axvline(x=avg_touching_time, color='black', linestyle='--', label='Average Touching Point')
 
 # ---------------- Buckling Point Detection ----------------
+# if valid_touching_times and valid_touching_z_positions:
+#     avg_touching_time = np.mean(valid_touching_times)
+#     # Find the nearest index to avg_touching_time
+#     touching_point_index = mean_force.index.get_indexer([avg_touching_time], method="nearest")[0]
+
+#     # Identify the peak force and its index starting from the touching point
+#     mean_force_from_touching = mean_force.iloc[touching_point_index:]
+#     peak_force_index = mean_force_from_touching.idxmax()
+#     peak_force = mean_force_from_touching[peak_force_index]
+
+#     # Find 80% of the peak force
+#     force_80_percent = 0.8 * peak_force
+
+#     # Find the index where force reaches 80% of the peak force
+#     idx_80_percent = mean_force_from_touching[mean_force_from_touching >= force_80_percent].index[0]
+#     pos_80_percent = mean_force.index.get_loc(idx_80_percent)
+
+#     # Perform linear fit for the increasing section from touching point to 80% of maximum force
+#     x_fit_values = mean_force.index[touching_point_index:pos_80_percent + 1].astype(float)
+#     y_fit_values = mean_force.iloc[touching_point_index:pos_80_percent + 1]
+
+#     linear_fit = np.polyfit(x_fit_values, y_fit_values, 1)
+
+#     # Calculate the intersection point
+#     intersection_x = (peak_force - linear_fit[1]) / linear_fit[0]
+#     intersection_y = peak_force
+
+#     # Interpolate the mean_z value at the intersection_x
+#     mean_z_values = mean_z.to_numpy()
+#     mean_z_indices = mean_z.index.astype(float).to_numpy()
+#     mean_z_at_buckling = np.interp(intersection_x, mean_z_indices, mean_z_values)
+
+#     mean_force_values = mean_force.to_numpy()
+#     mean_force_indices = mean_force.index.astype(float).to_numpy()
+#     mean_force_at_buckling = np.interp(intersection_x, mean_force_indices, mean_force_values)
+
+#     # Generate points for linear fit line
+#     x_fit_line = np.linspace(x_fit_values.min(), intersection_x, 100)
+#     y_fit_line = np.polyval(linear_fit, x_fit_line)
+
+#     # Plot the linear fit as a dashed line
+#     ax1.plot(x_fit_line, y_fit_line, '--', color='orange', label="Buckling Linear Fit")
+
+#     # Plot the interpolated point on the mean line
+#     ax1.scatter(intersection_x, mean_force_at_buckling, color="blue", label=f"Buckling Point on the line ({intersection_x:.2f}, {mean_force_at_buckling:.2f})")
+#     ax1.scatter(intersection_x, intersection_y, color="orange", label=f"80% interpolation Buckling Point ({intersection_x:.2f}, {intersection_y:.2f})")
+
+#     # Draw a horizontal line from the buckling point to the maximum force value
+#     peak_force_pos = mean_force.index.get_loc(peak_force_index)
+#     ax1.hlines(intersection_y, intersection_x, mean_force.index[peak_force_pos].astype(float),
+#                colors='orange', linestyles='dashed')
+
+#     # Draw a vertical line at the buckling point
+#     ax1.axvline(x=intersection_x, color="purple", linestyle="--", label="Buckling Point Vertical Line")
+
+#     # Annotate the mean_z value on the plot
+#     if mean_z_at_buckling is not None:
+#         ax2.text(intersection_x + 5, mean_z_at_buckling,
+#                  f"Mean Z at Buckling:\n {mean_z_at_buckling:.4f} m",
+#                  color="black", fontsize=10, ha="center", bbox=dict(facecolor='white', alpha=0.7))
+
+#     # Mark the intersection point on the mean_z line
+#     ax2.scatter(intersection_x, mean_z_at_buckling, color="red", label=f"Z-position value at Buckling Point ({mean_z_at_buckling:.4f})")
+
+#     # Add title and legend
+#     ax1.set_title("Filtered Force Magnitude and Offset Z Position with Buckling Point - Interpolation I")
+#     lines1, labels1 = ax1.get_legend_handles_labels()
+#     lines2, labels2 = ax2.get_legend_handles_labels()
+#     ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+# # ---------------- End of Buckling Point Detection ----------------
+
+# ---------------- Buckling Point Detection ----------------
 if valid_touching_times and valid_touching_z_positions:
     avg_touching_time = np.mean(valid_touching_times)
     # Find the nearest index to avg_touching_time
@@ -206,7 +278,7 @@ if valid_touching_times and valid_touching_z_positions:
 
     # Identify the peak force and its index starting from the touching point
     mean_force_from_touching = mean_force.iloc[touching_point_index:]  # Force values after touching point
-    peak_force_index = mean_force_from_touching.idxmax()  # Index of max force after touching point
+    peak_force_index = mean_force_from_touching.idxmax()  # Index (label) of max force after touching point
     peak_force = mean_force_from_touching[peak_force_index]  # Max force value
 
     # Find 80% of the peak force
@@ -216,142 +288,73 @@ if valid_touching_times and valid_touching_z_positions:
     idx_80_percent = mean_force_from_touching[mean_force_from_touching >= force_80_percent].index[0]
     pos_80_percent = mean_force.index.get_loc(idx_80_percent)  # Positional index for slicing
 
+    # ---------------- First Linear Fit (0% to 80% of Peak Force) ----------------
     # Perform linear fit for the increasing section from touching point to 80% of maximum force
-    x_fit_values = mean_force.index[touching_point_index:pos_80_percent + 1].astype(float)  # Convert index to float
-    y_fit_values = mean_force.iloc[touching_point_index:pos_80_percent + 1]  # Extract corresponding values
+    x_fit_values_0_80 = mean_force.index[touching_point_index:pos_80_percent + 1].astype(float)  # Convert index to float
+    y_fit_values_0_80 = mean_force.iloc[touching_point_index:pos_80_percent + 1]  # Extract corresponding values
 
-    linear_fit = np.polyfit(x_fit_values, y_fit_values, 1)
+    linear_fit_0_80 = np.polyfit(x_fit_values_0_80, y_fit_values_0_80, 1)
 
-    # Calculate the intersection point
-    intersection_x = (peak_force - linear_fit[1]) / linear_fit[0]
-    intersection_y = peak_force
+    # ---------------- Second Linear Fit (80% to 100% of Peak Force) ----------------
+    # Convert peak_force_index to positional index
+    peak_force_pos_index = mean_force.index.get_loc(peak_force_index)
 
-    # print('intersection x and y')
-    # print(intersection_x)
-    # print(intersection_y)
+    # Perform linear fit for the increasing section from 80% to 100% of maximum force
+    x_fit_values_80_100 = mean_force.index[pos_80_percent:peak_force_pos_index + 1].astype(float)  # Convert index to float (80% to peak)
+    y_fit_values_80_100 = mean_force.iloc[pos_80_percent:peak_force_pos_index + 1]  # Extract corresponding values
 
-    # Retrieve the offset Z position and mean_z value at the buckling point
-    offset_z_at_buckling = mean_z.loc[intersection_x] if intersection_x in mean_z.index else None
+    linear_fit_80_100 = np.polyfit(x_fit_values_80_100, y_fit_values_80_100, 1)
+
+    # ---------------- Find the Intersection Point ----------------
+    # Linear fit equations: y = m0 * x + b0 (0-80%) and y = m1 * x + b1 (80-100%)
+    m0, b0 = linear_fit_0_80
+    m1, b1 = linear_fit_80_100
+
+    # Find the intersection point by equating the two lines
+    # m0 * x + b0 = m1 * x + b1 => x = (b1 - b0) / (m0 - m1)
+    # Ensure the intersection point is calculated
+    if m0 != m1:
+        intersection_x = (b1 - b0) / (m0 - m1)
+        intersection_y = m0 * intersection_x + b0
+
+        # Find the point on the mean force line at the intersection_x
+        mean_line_y = np.interp(intersection_x, mean_force.index.astype(float), mean_force.to_numpy())
+
+        # Mark the point on the mean line
+        ax1.scatter(intersection_x, mean_line_y, color="blue", label=f"Buckling Point ({intersection_x:.2f}, {mean_line_y:.2f})")
+        ax1.scatter(intersection_x, intersection_y, color="orange", label=f"80-20 intersection ({intersection_x:.2f}, {intersection_y:.2f})")
+
+        # Plot the linear fit lines (orange and green)
+        x_fit_line_0_80 = np.linspace(x_fit_values_0_80.min(), intersection_x, 100)
+        y_fit_line_0_80 = np.polyval(linear_fit_0_80, x_fit_line_0_80)
+        ax1.plot(x_fit_line_0_80, y_fit_line_0_80, '--', color='orange', label="Buckling Linear Fit (0-80%)")
+
+        x_fit_line_80_100 = np.linspace(intersection_x, x_fit_values_80_100.max(), 100)
+        y_fit_line_80_100 = np.polyval(linear_fit_80_100, x_fit_line_80_100)
+        ax1.plot(x_fit_line_80_100, y_fit_line_80_100, '--', color='green', label="Buckling Linear Fit (80-100%)")
+
+        # Draw a vertical line at the buckling point
+        ax1.axvline(x=intersection_x, color="purple", linestyle="--", label="Buckling Point Vertical Line")
+
+    # ---------------- Annotate Mean Z Value ----------------
+    # Retrieve the mean_z value at the intersection point (if it exists)
     mean_z_nearest_index = mean_z.index.get_indexer([intersection_x], method="nearest")[0]
-    mean_z_at_buckling = mean_z.iloc[mean_z_nearest_index]
+    mean_z_at_intersection = mean_z.iloc[mean_z_nearest_index]
 
-    # Generate points for linear fit line
-    x_fit_line = np.linspace(mean_force.index[touching_point_index].astype(float), intersection_x, 100)
-    y_fit_line = np.polyval(linear_fit, x_fit_line)
-
-    # Plot the linear fit as a dashed line
-    ax1.plot(x_fit_line, y_fit_line, '--', color='orange', label="Buckling Linear Fit")
-
-    # Mark the intersection point
-    ax1.scatter(intersection_x, intersection_y, color="orange", label=f"Buckling Point ({intersection_x:.2f}, {intersection_y:.2f})")
-
-    # Draw a horizontal line from the buckling point to the maximum force value
-    peak_force_pos = mean_force.index.get_loc(peak_force_index)  # Positional index of the peak force
-    ax1.hlines(intersection_y, intersection_x, mean_force.index[peak_force_pos].astype(float), 
-               colors='orange', linestyles='dashed')
-
-    # Draw a vertical line at the buckling point
-    ax1.axvline(x=intersection_x, color="purple", linestyle="--", label="Buckling Point Vertical Line")
-
-    # Annotate the mean_z value on the plot
-    if mean_z_at_buckling is not None:
-        ax2.text(intersection_x+5, mean_z_at_buckling, 
-                 f"Mean Z at Buckling:\n {mean_z_at_buckling:.4f} m", 
+    if mean_z_at_intersection is not None:
+        ax2.text(intersection_x + 5, mean_z_at_intersection,
+                 f"Mean Z at Intersection:\n {mean_z_at_intersection:.4f} m",
                  color="black", fontsize=10, ha="center", bbox=dict(facecolor='white', alpha=0.7))
 
-    # Mark the intersection point
-    ax2.scatter(intersection_x, mean_z_at_buckling, color="red", label=f"Z-postiion value at Buckling Point ({mean_z_at_buckling:.4f})")
-
-    # print(f"Intersection X: {intersection_x}")
-    # print(f"Mean Z at Buckling: {mean_z_at_buckling}")
+    # Mark the intersection point on the Z position plot
+    ax2.scatter(intersection_x, mean_z_at_intersection, color="red", label=f"Z-position at Intersection ({mean_z_at_intersection:.4f})")
 
     # Add title and legend
-    ax1.set_title("Filtered Force Magnitude and Offset Z Position with Buckling Point")
+    ax1.set_title("Filtered Force Magnitude and Offset Z Position with Buckling Point and Intersection - Interpolation 2")
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
 # ---------------- End of Buckling Point Detection ----------------
-
-# # ---------------- Buckling Point Detection ----------------
-# if valid_touching_times and valid_touching_z_positions:
-#     avg_touching_time = np.mean(valid_touching_times)
-#     # Find the nearest index to avg_touching_time
-#     touching_point_index = mean_force.index.get_indexer([avg_touching_time], method="nearest")[0]  # Nearest positional index
-
-#     # Identify the peak force and its index starting from the touching point
-#     mean_force_from_touching = mean_force.iloc[touching_point_index:]  # Force values after touching point
-#     peak_force_index = mean_force_from_touching.idxmax()  # Index (label) of max force after touching point
-#     peak_force = mean_force_from_touching[peak_force_index]  # Max force value
-
-#     # Find 80% of the peak force
-#     force_80_percent = 0.8 * peak_force
-
-#     # Find the index where force reaches 80% of the peak force
-#     idx_80_percent = mean_force_from_touching[mean_force_from_touching >= force_80_percent].index[0]
-#     pos_80_percent = mean_force.index.get_loc(idx_80_percent)  # Positional index for slicing
-
-#     # ---------------- First Linear Fit (0% to 80% of Peak Force) ----------------
-#     # Perform linear fit for the increasing section from touching point to 80% of maximum force
-#     x_fit_values_0_80 = mean_force.index[touching_point_index:pos_80_percent + 1].astype(float)  # Convert index to float
-#     y_fit_values_0_80 = mean_force.iloc[touching_point_index:pos_80_percent + 1]  # Extract corresponding values
-
-#     linear_fit_0_80 = np.polyfit(x_fit_values_0_80, y_fit_values_0_80, 1)
-
-#     # ---------------- Second Linear Fit (80% to 100% of Peak Force) ----------------
-#     # Convert peak_force_index to positional index
-#     peak_force_pos_index = mean_force.index.get_loc(peak_force_index)
-
-#     # Perform linear fit for the increasing section from 80% to 100% of maximum force
-#     x_fit_values_80_100 = mean_force.index[pos_80_percent:peak_force_pos_index + 1].astype(float)  # Convert index to float (80% to peak)
-#     y_fit_values_80_100 = mean_force.iloc[pos_80_percent:peak_force_pos_index + 1]  # Extract corresponding values
-
-#     linear_fit_80_100 = np.polyfit(x_fit_values_80_100, y_fit_values_80_100, 1)
-
-#     # ---------------- Find the Intersection Point ----------------
-#     # Linear fit equations: y = m0 * x + b0 (0-80%) and y = m1 * x + b1 (80-100%)
-#     m0, b0 = linear_fit_0_80
-#     m1, b1 = linear_fit_80_100
-
-#     # Find the intersection point by equating the two lines
-#     # m0 * x + b0 = m1 * x + b1 => x = (b1 - b0) / (m0 - m1)
-#     if m0 != m1:
-#         intersection_x = (b1 - b0) / (m0 - m1)
-#         intersection_y = m0 * intersection_x + b0
-
-#         # Mark the intersection point
-#         ax1.scatter(intersection_x, intersection_y, color="red", label=f"Intersection Point ({intersection_x:.2f}, {intersection_y:.2f})")
-
-#         # Ensure the orange and green lines meet at the red point
-#         x_fit_line_0_80 = np.linspace(x_fit_values_0_80.min(), intersection_x, 100)
-#         y_fit_line_0_80 = np.polyval(linear_fit_0_80, x_fit_line_0_80)
-#         ax1.plot(x_fit_line_0_80, y_fit_line_0_80, '--', color='orange', label="Buckling Linear Fit (0-80%)")
-
-#         x_fit_line_80_100 = np.linspace(intersection_x, x_fit_values_80_100.max(), 100)
-#         y_fit_line_80_100 = np.polyval(linear_fit_80_100, x_fit_line_80_100)
-#         ax1.plot(x_fit_line_80_100, y_fit_line_80_100, '--', color='green', label="Buckling Linear Fit (80-100%)")
-
-#     # Draw a vertical line at the buckling point
-#     ax1.axvline(x=intersection_x, color="purple", linestyle="--", label="Buckling Point Vertical Line")
-
-#     # ---------------- Annotate Mean Z Value ----------------
-#     # Retrieve the mean_z value at the intersection point (if it exists)
-#     mean_z_nearest_index = mean_z.index.get_indexer([intersection_x], method="nearest")[0]
-#     mean_z_at_intersection = mean_z.iloc[mean_z_nearest_index]
-
-#     if mean_z_at_intersection is not None:
-#         ax2.text(intersection_x + 5, mean_z_at_intersection,
-#                  f"Mean Z at Intersection:\n {mean_z_at_intersection:.4f} m",
-#                  color="black", fontsize=10, ha="center", bbox=dict(facecolor='white', alpha=0.7))
-
-#     # Mark the intersection point on the Z position plot
-#     ax2.scatter(intersection_x, mean_z_at_intersection, color="red", label=f"Z-position at Intersection ({mean_z_at_intersection:.4f})")
-
-#     # Add title and legend
-#     ax1.set_title("Filtered Force Magnitude and Offset Z Position with Buckling Point and Intersection")
-#     lines1, labels1 = ax1.get_legend_handles_labels()
-#     lines2, labels2 = ax2.get_legend_handles_labels()
-#     ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
-# # ---------------- End of Buckling Point Detection ----------------
 
 # Second Plot: Raw Force Magnitude and Non-Offset Z Position
 ax3 = axs[1]
