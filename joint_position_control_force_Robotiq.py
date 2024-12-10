@@ -76,7 +76,7 @@ def initialize_force_sensor_for_calibration():
     Initialize the sensor for calibration without applying offsets.
     """
     try:
-        sensor = ForceSensor("/dev/ttyUSB1", np.zeros(3), np.zeros(3))
+        sensor = ForceSensor("/dev/ttyUSB0", np.zeros(3), np.zeros(3))
         sensor.force_sensor_setup()
         print("Sensor initialized for calibration.")
         return sensor
@@ -233,7 +233,7 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
             # if (time.time() - start_time > 30):
                 print("Timeout reached. Breaking loop.")
                 break
-            if np.max(position_error) < 1e-3:
+            if np.max(position_error) < 2e-3:
             # if (time.time() - start_time > 30):
                 print("Position error is small. Breaking loop.")
                 break
@@ -249,11 +249,11 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         time.sleep(0.01)
 
 def joint_position_control(robot_interface, controller_cfg):
-    reset_joint_positions = [-0.0070638, 0.4045377, -0.0261955, -2.1954542, -0.0307219, 4.1911784, 0.7720917]
+    reset_joint_positions = [-0.0076, 0.4741, -0.0251, -2.1853, -0.0267, 4.2502, 0.7698]
     # [-0.00757461,  0.47413217, -0.02512669, -2.18534287, -0.02667678,  4.2501711, 0.7698466 ]
     # [-0.00805785,  0.46225722, -0.0245614,  -2.18755885, -0.02669979,  4.24048583, 0.76958523]
     # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
-    des_joint_positions = [-0.0070638, 0.4045377, -0.0261955, -2.1954542, -0.0307219, 4.1911784, 0.7720917]
+    des_joint_positions = [-0.00786796,  0.55953669, -0.0245075,  -2.16437121, -0.02514699,  4.31473024, 0.76914151]
     
     #BaRiFlex
     # [-0.00817004,  0.584347,   -0.02353005, -2.15728207, -0.01831063,  4.33053075,  0.76582103]
@@ -275,8 +275,8 @@ def joint_position_control(robot_interface, controller_cfg):
     # [-0.0079944, 0.4505116, -0.0247087, -2.1895460, -0.0272609, 4.2308043, 0.7698502]   # +15mm
     # [-0.0081320, 0.4574915, -0.0243838, -2.1884906, -0.0256979, 4.2363219, 0.7690181]   # +12mm
     # [-0.0080579, 0.4622572, -0.0245614, -2.1875589, -0.0266998, 4.2404858, 0.7695852]   # +10mm
-    # [-0.00805785,  0.46225722, -0.0245614,  -2.18755885, -0.02669979,  4.24048583, 0.76958523]    # +5mm
-    # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]     # touching
+    # [-0.0076, 0.4741, -0.0251, -2.1853, -0.0267, 4.2502, 0.7698]                        # +5mm
+    # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]    # touching
     # [-0.00767597,  0.51022177, -0.02485,    -2.17755938, -0.02581892,  4.27849113,  0.76947171]   # -10mm
     # [-0.00744893,  0.52245477, -0.02512409, -2.17452938, -0.02589844,  4.28777901,  0.76955813]   # -15mm
     # [-0.00764558,  0.534649,   -0.02463884, -2.17151983, -0.02343242,  4.29640372,  0.76849901]   # -20mm

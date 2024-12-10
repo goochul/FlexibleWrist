@@ -31,7 +31,7 @@ dh_params = [
 ]
 
 # Initial joint values (theta) in radians
-initial_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481]
+initial_joint_positions = [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
 
 # [ 0.00596583,  0.81711726, -0.03810693, -2.05191146, -0.01553237,  4.41286068,  0.7810791 ]
 #[0.00783327163909093,    0.5558480613472636, -0.04036106289390794, -2.163110868612272, -0.015487256765292425, 4.260755619281773, 0.7779242274028955]
@@ -56,7 +56,7 @@ print(f"Rotation Angle between End-Effector and Base Frame (radians): {rotation_
 print(f"Rotation Angle between End-Effector and Base Frame (degrees): {np.degrees(rotation_angle)}")
 
 # Step 2: Desired end-effector position (move -0.1m in z-direction)
-desired_position = initial_position + np.array([-0.0, 0.05, 0.001])
+desired_position = initial_position + np.array([-0.0, 0.00, 0.005])
 desired_orientation = initial_orientation
 
 print(f"desired position: {desired_position}")

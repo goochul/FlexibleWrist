@@ -11,6 +11,17 @@ if not cap.isOpened():
     print(f"Failed to open the Nexigo camera at /dev/video{camera_index}.")
     exit()
 
+# cap.set(cv2.CAP_PROP_BRIGHTNESS, -1)  # Reset brightness to default
+# cap.set(cv2.CAP_PROP_CONTRAST, -1)    # Reset contrast to default
+# cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)  # Enable auto exposure
+
+
+# cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)  # Set auto exposure
+# cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)  # Disable auto exposure (0.25 is manual mode)
+# cap.set(cv2.CAP_PROP_EXPOSURE, -10)  # Set a lower exposure value (experiment with this)
+
+# cap.set(cv2.CAP_PROP_BRIGHTNESS, 10)  # Adjust brightness (0–100 scale; adjust as needed)
+
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 frame_rate = 30  # Desired frame rate
