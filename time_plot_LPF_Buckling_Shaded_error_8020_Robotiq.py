@@ -10,9 +10,11 @@ import os
 file_paths = [
     Path('data/20241204/191715/'),
     Path('data/20241204/192151/'),
-    Path('data/20241204/192626/'),
-    Path('data/20241204/193042/'),
+    # Path('data/20241204/192626/'),
+    # Path('data/20241204/193042/'),
     # Path('data/20241204/193527/'),
+
+    # Path('data/20241210/Robotiq/172652/')
 ]
 
 
@@ -54,7 +56,7 @@ def process_dataset(file_path):
     
     # Set the parameters
     initial_slope_threshold = 0.01  # Represents near-zero slope to identify starting point
-    slope_threshold = 0.7           # The threshold that represents a significant increase
+    slope_threshold = 1.0           # The threshold that represents a significant increase
 
     # Initialize index values
     slope_threshold_index = None
@@ -375,6 +377,15 @@ if valid_touching_times and valid_touching_z_positions:
     mean_z_nearest_index = mean_z.index.get_indexer([intersection_x], method="nearest")[0]
     mean_z_at_intersection = mean_z.iloc[mean_z_nearest_index]
 
+    # Check if the timestamp 60 exists in the mean_z index
+    time_60 = 60.0
+    if time_60 in mean_z.index:
+        z_position_60 = mean_z.loc[time_60]  # Get the Z position at 60 seconds
+    else:
+        # Interpolate the Z position if 60 seconds is not an exact index
+        z_position_60 = np.interp(time_60, mean_z.index.astype(float), mean_z.values)
+
+
     if mean_z_at_intersection is not None:
         ax2.text(intersection_x + 5, mean_z_at_intersection,
                  f"Mean Z at Intersection:\n {mean_z_at_intersection:.4f} m",
@@ -382,6 +393,11 @@ if valid_touching_times and valid_touching_z_positions:
 
     # Mark the intersection point on the Z position plot
     ax2.scatter(intersection_x, mean_z_at_intersection, color="red", label=f"Z-position at Intersection ({mean_z_at_intersection:.4f})")
+
+    ax2.scatter(time_60, z_position_60, color='purple', label=f'Point at 60s ({z_position_60:.4f}m)')
+
+    # Annotate the point
+    ax2.text(time_60 + 2, z_position_60, f'{z_position_60:.4f} m', color='purple', fontsize=10, ha='center')
 
     # Add title and legend
     ax1.set_title("Filtered Force Magnitude and Offset Z Position with Buckling Point and Intersection - Interpolation 2")

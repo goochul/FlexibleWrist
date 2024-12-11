@@ -6,11 +6,12 @@ from scipy.stats import linregress
 import numpy as np
 
 # Centralized PATH variable
-file_PATH = Path('data/20241127/134210/')
+# file_PATH = Path('data/20241127/134210/')
 # file_PATH = Path('data/20241127/134523/')
 # file_PATH = Path('data/20241127/134949/')
 # file_PATH = Path('data/20241127/135401/')
 # file_PATH = Path('data/20241127/135820/')
+file_PATH = Path('data/20241210/Robotiq/172652/')
 
 # Load the data
 force_data = pd.read_csv(file_PATH / 'force_data.csv')
@@ -58,7 +59,7 @@ merged_data['Force Slope'] = 100 * merged_data['Filtered Force Magnitude'].rolli
 
 # Set the parameters
 initial_slope_threshold = 0.05  # Represents near-zero slope to identify starting point
-slope_threshold = 0.7           # The threshold that represents a significant increase
+slope_threshold = 1.2           # The threshold that represents a significant increase
 
 # Initialize index values
 slope_threshold_index = None
