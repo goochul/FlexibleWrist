@@ -8,13 +8,25 @@ import os
 
 # List of file paths
 file_paths = [
-    Path('data/20241204/191715/'),
-    Path('data/20241204/192151/'),
+    # Path('data/20241204/191715/'),
+    # Path('data/20241204/192151/'),
     # Path('data/20241204/192626/'),
     # Path('data/20241204/193042/'),
     # Path('data/20241204/193527/'),
 
     # Path('data/20241210/Robotiq/172652/')
+
+    # Path('data/20241211/Robotiq_without_Ujoint/143014/'),
+    # Path('data/20241211/Robotiq_without_Ujoint/143449/'),
+    # Path('data/20241211/Robotiq_without_Ujoint/143946/'),
+    # Path('data/20241211/Robotiq_without_Ujoint/144439/')
+
+
+    Path('data/20241211/Robotiq_only_Ujoint/154057/'),
+    Path('data/20241211/Robotiq_only_Ujoint/160151/'),
+    Path('data/20241211/Robotiq_only_Ujoint/160810/'),
+    Path('data/20241211/Robotiq_only_Ujoint/161331/')
+
 ]
 
 
@@ -25,7 +37,6 @@ def low_pass_filter(data, cutoff, fs, order=4):
     b, a = butter(order, normal_cutoff, btype='low', analog=False)
     return filtfilt(b, a, data)
 
-# Function to process a single dataset
 def process_dataset(file_path):
     force_data = pd.read_csv(file_path / 'force_data.csv')
     z_position_data = pd.read_csv(file_path / 'z_position_data.csv')
@@ -45,12 +56,11 @@ def process_dataset(file_path):
     merged_data = pd.merge_asof(force_data.sort_values('Timestamp'), 
                                 z_position_data.sort_values('Timestamp'), 
                                 on="Timestamp", direction="nearest")
-    # print(merged_data)
     
     # Calculate Force Slope
     window_size = int(3 * sampling_frequency)
     merged_data['Force Slope'] = 100 * merged_data['Filtered Force Magnitude'].rolling(window=window_size).apply(
-        lambda x: linregress(range(len(x)), x).slope if len(x) > 1.0 else 0,
+        lambda x: linregress(range(len(x)), x).slope if len(x) > 1 else 0,
         raw=False
     )
     
@@ -75,28 +85,16 @@ def process_dataset(file_path):
                 touching_point_index = idx
                 break
 
-    # Output the results
+    # If touching point is found, calculate offset Z Position
     if touching_point_index is not None:
-        print(f"Touching point index found closest to the slope threshold index: {touching_point_index}")
-        print(f"Timestamp of touching point: {merged_data['Timestamp'].iloc[touching_point_index]}")
-    else:
-        print("No touching point found where slope starts increasing.")
-
-    if touching_point_index is not None:
-        touching_point_force = merged_data.loc[touching_point_index, 'Filtered Force Magnitude']
-        touching_point_timestamp = merged_data.loc[touching_point_index, 'Timestamp']
         touching_point_z_position = merged_data.loc[touching_point_index, 'Z Position']
         merged_data['Offset Z Position'] = merged_data['Z Position'] - touching_point_z_position
-
-        print(f"Touching Point Index: {touching_point_index}")
-        print(f"Touching Point Force: {touching_point_force:.2f} N")
-        print(f"Touching Point Timestamp: {touching_point_timestamp:.2f}s")
-        print(f"Touching Point Z Position: {touching_point_z_position:.5f} m")
-        print(f"Z-Position values offset by {touching_point_z_position:.5f} m.")
     else:
-        print("No valid touching point detected based on slope minima.")
-    
+        # Initialize 'Offset Z Position' with NaN if no touching point is found
+        merged_data['Offset Z Position'] = np.nan
+
     return merged_data, touching_point_index
+
 
 # # Function to save merged data
 # def process_and_save_dataset(file_path, output_path):
@@ -214,22 +212,27 @@ if valid_touching_times and valid_touching_z_positions:
 
     ax1 = axs[0]
     # Plot Filtered Force Magnitude
-    ax1.plot(mean_force.index, mean_force, label="Filtered Force Magnitude Mean", color='blue')
-    ax1.fill_between(mean_force.index, mean_force - std_force, mean_force + std_force,
-                     color='blue', alpha=0.3, label="Force Magnitude Std Dev")
+    ax1.plot(mean_force.index.to_numpy(), mean_force.to_numpy(), label="Filtered Force Magnitude Mean", color='blue')
+    ax1.fill_between(mean_force.index.to_numpy(), 
+                    (mean_force - std_force).to_numpy(), 
+                    (mean_force + std_force).to_numpy(), 
+                    color='blue', alpha=0.3, label="Force Magnitude Std Dev")
     ax1.set_xlabel("Time (s)")
     ax1.set_ylabel("Force Magnitude (N)", color='blue')
     ax1.tick_params(axis='y', labelcolor='blue')
-    ax1.set_ylim([-15, 15])
+    ax1.set_ylim([-20, 20])
 
-    # Plot Offset Z Position
+    # Offset Z Position plot
     ax2 = ax1.twinx()
-    ax2.plot(mean_z.index, mean_z, label="Offset Z Position Mean", color='red')
-    ax2.fill_between(mean_z.index, mean_z - std_z, mean_z + std_z,
-                     color='red', alpha=0.3, label="Z Position Std Dev")
+    ax2.plot(mean_z.index.to_numpy(), mean_z.to_numpy(), label="Offset Z Position Mean", color='red')
+    ax2.fill_between(mean_z.index.to_numpy(), 
+                    (mean_z - std_z).to_numpy(), 
+                    (mean_z + std_z).to_numpy(), 
+                    color='red', alpha=0.3, label="Z Position Std Dev")
     ax2.set_ylabel("Offset Z Position (m)", color='red')
     ax2.tick_params(axis='y', labelcolor='red')
     ax2.set_ylim([-0.04, 0.04])
+
 
     # Add Average Touching Point
     ax1.axvline(x=avg_touching_time, color='black', linestyle='--', label='Average Touching Point')
@@ -408,23 +411,38 @@ if valid_touching_times and valid_touching_z_positions:
 
 # Second Plot: Raw Force Magnitude and Non-Offset Z Position
 ax3 = axs[1]
+
+# Convert data to NumPy arrays for compatibility
+mean_raw_force_index = mean_raw_force.index.to_numpy()
+mean_raw_force_values = mean_raw_force.to_numpy()
+std_raw_force_values = std_raw_force.to_numpy()
+
+mean_raw_z_position_index = mean_raw_z_position.index.to_numpy()
+mean_raw_z_position_values = mean_raw_z_position.to_numpy()
+std_raw_z_position_values = std_raw_z_position.to_numpy()
+
 # Plot Raw Force Magnitude
-ax3.plot(mean_raw_force.index, mean_raw_force, label="Raw Force Magnitude Mean", color="green")
-ax3.fill_between(mean_raw_force.index, mean_raw_force - std_raw_force, mean_raw_force + std_raw_force,
+ax3.plot(mean_raw_force_index, mean_raw_force_values, label="Raw Force Magnitude Mean", color="green")
+ax3.fill_between(mean_raw_force_index, 
+                 mean_raw_force_values - std_raw_force_values, 
+                 mean_raw_force_values + std_raw_force_values,
                  color="green", alpha=0.3, label="Raw Force Magnitude Std Dev")
 ax3.set_xlabel("Time (s)")
 ax3.set_ylabel("Force Magnitude (N)", color="green")
 ax3.tick_params(axis="y", labelcolor="green")
-ax3.set_ylim([-15, 15])  # Adjusted for raw force range
+ax3.set_ylim([-20, 20])  # Adjusted for raw force range
 
 # Plot Non-Offset Z Position
 ax4 = ax3.twinx()
-ax4.plot(mean_raw_z_position.index, mean_raw_z_position, label="Non-Offset Z Position Mean", color="red", linestyle="--")
-ax4.fill_between(mean_raw_z_position.index, mean_raw_z_position - std_raw_z_position, mean_raw_z_position + std_raw_z_position,
+ax4.plot(mean_raw_z_position_index, mean_raw_z_position_values, label="Non-Offset Z Position Mean", color="red", linestyle="--")
+ax4.fill_between(mean_raw_z_position_index, 
+                 mean_raw_z_position_values - std_raw_z_position_values, 
+                 mean_raw_z_position_values + std_raw_z_position_values,
                  color="red", alpha=0.3, label="Z Position Std Dev")
 ax4.set_ylabel("Z Position (m)", color="red")
 ax4.tick_params(axis='y', labelcolor='red')
 ax4.set_ylim([-0.04, 0.04])  # Adjusted for Z position range
+
 
 # Add Average Touching Point (Vertical Line)
 if valid_touching_raw_z_positions and valid_touching_times:

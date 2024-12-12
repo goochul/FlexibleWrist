@@ -5,7 +5,13 @@ from pathlib import Path
 from scipy.stats import linregress
 
 # Centralized PATH variable
-file_PATH = Path('data/20241210/Robotiq/172652/')
+file_PATH = Path('data/20241211/143449/')
+# Path('data/20241211/143014/')
+# Path('data/20241211/143449/')
+# Path('data/20241211/143946/')
+# Path('data/20241211/144439/')
+# Path('data/20241210/Robotiq/172652/')
+
 
 # Load the data
 force_data = pd.read_csv(file_PATH / 'force_data.csv')
@@ -46,14 +52,20 @@ merged_data['Force Slope'] = 100 *merged_data['Filtered Force Magnitude'].rollin
 # Plotting
 plt.figure(figsize=(12, 6))
 
+# Convert data to NumPy arrays to avoid multi-dimensional indexing errors
+timestamps = merged_data['Timestamp'].to_numpy()
+filtered_force_magnitude = merged_data['Filtered Force Magnitude'].to_numpy()
+z_position = merged_data['Z Position'].to_numpy()
+force_slope = merged_data['Force Slope'].to_numpy()
+
 # Plot Filtered Force Magnitude
-plt.plot(merged_data['Timestamp'], merged_data['Filtered Force Magnitude'], label="Filtered Force Magnitude", color='blue')
+plt.plot(timestamps, filtered_force_magnitude, label="Filtered Force Magnitude", color='blue')
 
 # Plot Z Position
-plt.plot(merged_data['Timestamp'], merged_data['Z Position'], label="Z Position", color='purple', linestyle="--")
+plt.plot(timestamps, z_position, label="Z Position", color='purple', linestyle="--")
 
 # Plot Force Slope
-plt.plot(merged_data['Timestamp'], merged_data['Force Slope'], label="Force Slope (3s Window)", color='orange')
+plt.plot(timestamps, force_slope, label="Force Slope (3s Window)", color='orange')
 
 # Customize the plot
 plt.xlabel("Time (s)")
