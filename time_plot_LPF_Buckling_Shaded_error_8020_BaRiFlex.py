@@ -6,6 +6,8 @@ from scipy.stats import linregress
 import numpy as np
 import os
 
+title_name = "Filtered Force Magnitude and Offset Z Position with Buckling Point - thickness 1mm, angle 170 degrees, h = 11mm"
+
 # List of file paths
 file_paths = [
     # Path('data/20241127/134210/'),
@@ -14,8 +16,14 @@ file_paths = [
     # Path('data/20241127/135401/'),
     # Path('data/20241127/135820/'),
 
-    Path('data/20241212/172441/'),
-    # Path('data/20241212/173819/'),
+    # Path('data/20241212/172441/'),
+    Path('data/20241212/173819/'),
+
+    # Path('data/20241219/155143/'),
+    # Path('data/20241219/170500/'),
+    # Path('data/20241219/171544/'),
+
+    # Path('data/20241219/174620/'),
 ]
 
 
@@ -247,7 +255,7 @@ if valid_touching_times and valid_touching_z_positions:
     peak_force = mean_force_from_touching[peak_force_index]
 
     # Find 80% of the peak force
-    force_80_percent = 0.8 * peak_force
+    force_80_percent = 0.99 * peak_force
 
     # Find the index where force reaches 80% of the peak force
     idx_80_percent = mean_force_from_touching[mean_force_from_touching >= force_80_percent].index[0]
@@ -301,10 +309,10 @@ if valid_touching_times and valid_touching_z_positions:
     ax2.scatter(intersection_x, mean_z_at_buckling, color="red", label=f"Z-position value at Buckling Point ({mean_z_at_buckling:.4f})")
 
     # Add title and legend
-    ax1.set_title("Filtered Force Magnitude and Offset Z Position with Buckling Point - Interpolation I")
+    ax1.set_title(title_name)
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
 # ---------------- End of Buckling Point Detection ----------------
 
 # # ---------------- Buckling Point Detection ----------------
@@ -390,7 +398,7 @@ if valid_touching_times and valid_touching_z_positions:
 #     ax1.set_title("Filtered Force Magnitude and Offset Z Position with Buckling Point and Intersection - Interpolation 2")
 #     lines1, labels1 = ax1.get_legend_handles_labels()
 #     lines2, labels2 = ax2.get_legend_handles_labels()
-#     ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+#     ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
 # # ---------------- End of Buckling Point Detection ----------------
 
 # Second Plot: Raw Force Magnitude and Non-Offset Z Position
@@ -433,7 +441,7 @@ if valid_touching_raw_z_positions and valid_touching_times:
 ax3.set_title("Raw Force Magnitude and Non-Offset Z Position with Average Touching Point")
 lines3, labels3 = ax3.get_legend_handles_labels()
 lines4, labels4 = ax4.get_legend_handles_labels()
-ax3.legend(lines3 + lines4, labels3 + labels4, loc="upper left")
+ax3.legend(lines3 + lines4, labels3 + labels4, loc="upper right")
 
 # Add grid and layout
 for ax in axs:
