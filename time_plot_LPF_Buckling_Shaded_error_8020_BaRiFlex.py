@@ -17,13 +17,19 @@ file_paths = [
     # Path('data/20241127/135820/'),
 
     # Path('data/20241212/172441/'),
-    Path('data/20241212/173819/'),
+    # Path('data/20241212/173819/'),
 
     # Path('data/20241219/155143/'),
     # Path('data/20241219/170500/'),
     # Path('data/20241219/171544/'),
 
     # Path('data/20241219/174620/'),
+
+    # Path('data/20241220/160006/'),
+    # Path('data/20241220/163215/'),
+    # Path('data/20241220/163723/'),
+    Path('data/20241220/165715/'),
+
 ]
 
 
@@ -64,8 +70,8 @@ def process_dataset(file_path):
     )
     
     # Set the parameters
-    initial_slope_threshold = 0.05  # Represents near-zero slope to identify starting point
-    slope_threshold = 0.7           # The threshold that represents a significant increase
+    initial_slope_threshold = 0.5  # Represents near-zero slope to identify starting point
+    slope_threshold = 1.0           # The threshold that represents a significant increase
 
     # Initialize index values
     slope_threshold_index = None
