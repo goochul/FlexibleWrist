@@ -6,7 +6,7 @@ from scipy.stats import linregress
 import numpy as np
 import os
 
-title_name = "Filtered Force Magnitude and Offset Z Position with Buckling Point - thickness 1mm, angle 170 degrees, h = 9mm"
+title_name = "Filtered Force Magnitude and Offset Z Position with Buckling Point - thickness 1.0mm, angle 170 degrees, h = 9mm"
 
 # List of file paths
 file_paths = [
@@ -30,11 +30,11 @@ file_paths = [
     # Path('data/20241220/163723/'),
 
     # Path('data/20241220/165715/'),
-    # Path('data/20241220/171317/'),
-    # Path('data/20241220/171900/'),
+    Path('data/20241220/171317/'),
+    Path('data/20241220/171900/'),
 
     # Path('data/20241220/175628/'),
-    Path('data/20241220/182144/'),
+    # Path('data/20241220/182144/'),
 
 ]
 
