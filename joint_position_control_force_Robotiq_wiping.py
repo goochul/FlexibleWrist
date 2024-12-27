@@ -76,7 +76,7 @@ def initialize_force_sensor_for_calibration():
     Initialize the sensor for calibration without applying offsets.
     """
     try:
-        sensor = ForceSensor("/dev/ttyUSB1", np.zeros(3), np.zeros(3))
+        sensor = ForceSensor("/dev/ttyUSB0", np.zeros(3), np.zeros(3))
         sensor.force_sensor_setup()
         print("Sensor initialized for calibration.")
         return sensor
@@ -250,10 +250,12 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         time.sleep(0.01)
 
 def joint_position_control(robot_interface, controller_cfg):
-    reset_joint_positions = [-0.0035, 0.3793, 0.0874, -2.1860, -0.0769, 4.1755, 0.8052]
+    reset_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] 
+    # [-0.0035, 0.3793, 0.0874, -2.1860, -0.0769, 4.1755, 0.8052]
     # [-0.00805785,  0.46225722, -0.0245614,  -2.18755885, -0.02669979,  4.24048583, 0.76958523]
     # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
-    des_joint_positions = [0.0035, 0.3821, 0.0751, -2.1764, -0.1221, 4.1972, 0.7484]
+    des_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] 
+    # [0.0035, 0.3821, 0.0751, -2.1764, -0.1221, 4.1972, 0.7484]
 
     #BaRiFlex
     # [-0.00817004,  0.584347,   -0.02353005, -2.15728207, -0.01831063,  4.33053075,  0.76582103]
