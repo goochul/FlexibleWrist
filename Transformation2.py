@@ -92,6 +92,7 @@ if result.success:
     print(f"Optimized Joint Positions: [{', '.join(formatted_positions)}]")
 
     final_T = forward_kinematics(optimized_joint_positions, dh_params)
+    # print(final_T)
     final_position = final_T[:3, 3]
     final_orientation = R.from_matrix(final_T[:3, :3]).as_euler('xyz', degrees=False)
 
