@@ -47,7 +47,7 @@ print(f"Initial End-Effector Position: {initial_position}")
 print(f"Initial End-Effector Orientation (radians): {initial_orientation}")
 
 # Desired end-effector position and orientation
-desired_position = initial_position + np.array([0.0, 0.01, 0.0])  # Move +0.01m in y-direction
+desired_position = initial_position + np.array([-0.01, 0.00, 0.0])  # Move +0.01m in y-direction
 desired_orientation = initial_orientation  # Maintain current orientation
 
 position_tolerance = 0.005  # Allowable position error in meters

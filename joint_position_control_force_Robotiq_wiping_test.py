@@ -36,6 +36,7 @@ Nexigo_camera_index = 6
 force_threshold = 50
 torque_threshold = 5
 force_max = 20  # Set the force_max threshold here
+eef_title = "Offset End-Effector Positions (X, Y, Z) Over Time with 2x Kp"
 
 # Event signals
 stop_movement = threading.Event()
@@ -279,6 +280,9 @@ def joint_position_control(robot_interface, controller_cfg):
 
 
     # Aluminum Frame Test data for BaRiFlex
+    # [-0.0070, 0.3027, -0.0309, -2.5290, -0.0224, 4.4196, 0.7622] # -100mm
+    # [-0.0320, 0.3165, 0.1432, -2.5073, -0.0062, 4.4658, 0.7303] # x:-100mm y:+50mm
+
     # [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] # +50mm
     # [-0.0035351, 0.3792675, 0.0874464, -2.1860231, -0.0768626, 4.1755263, 0.8051557] # +50, y+50mm
     # [-0.0361684, 0.3696956, -0.1066069, -2.2031991, 0.0345756, 4.1004231, 0.7635921] # +50, y-50mm
@@ -473,7 +477,7 @@ def plot_merged_data(data_folder):
         ax5.set_ylabel('Position Offset (m)')
         ax5.legend(loc='upper left')
         ax5.grid(True)
-        ax5.set_title("Offset End-Effector Positions (X, Y, Z) Over Time")
+        ax5.set_title(eef_title)
 
         eef_plot_path = os.path.join(data_folder, "eef_offset_plot.png")
         plt.savefig(eef_plot_path, dpi=300)
@@ -514,6 +518,8 @@ def main():
     except Exception as e:
         print(f"Robot interface initialization failed: {e}")
         return
+
+    # print(joint_controller_cfg.joint_kp)
 
     global_start_time = time.time()
 
