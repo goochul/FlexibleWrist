@@ -4,22 +4,6 @@ import matplotlib.pyplot as plt
 def dh_transform(a, d, alpha, theta):
     """
     Calculate the individual transformation matrix from DH parameters.
-
-    Parameters:
-    -----------
-    a     : float
-        Link length (distance along the X-axis)
-    d     : float
-        Link offset (distance along the Z-axis)
-    alpha : float
-        Twist angle (rotation about X-axis)
-    theta : float
-        Joint angle (rotation about Z-axis)
-
-    Returns:
-    --------
-    T : 4x4 numpy array
-        The transformation matrix
     """
     T = np.array([
         [np.cos(theta), -np.sin(theta), 0,           a],
@@ -32,18 +16,6 @@ def dh_transform(a, d, alpha, theta):
 def forward_kinematics(joint_angles, dh_params):
     """
     Compute the forward kinematics for a given set of joint angles using DH parameters.
-    
-    Parameters:
-    -----------
-    joint_angles : 1D array-like
-        Joint angles in radians
-    dh_params : 2D array-like
-        DH parameters for each joint, shape = (N, 3) where columns are [a, d, alpha]
-
-    Returns:
-    --------
-    T_final : 4x4 numpy array
-        Overall transformation matrix from the base to the end-effector
     """
     T_final = np.eye(4)
     num_joints = len(joint_angles)
@@ -58,19 +30,8 @@ def forward_kinematics(joint_angles, dh_params):
 def rotm2quat(R):
     """
     Convert a 3x3 rotation matrix to a quaternion [w, x, y, z].
-
-    Parameters:
-    -----------
-    R : 3x3 numpy array
-        Rotation matrix
-
-    Returns:
-    --------
-    q : 1D array, shape = (4,)
-        Quaternion [w, x, y, z]
     """
     trace = np.trace(R)
-    # Use max() to avoid taking sqrt of a small negative due to floating-point errors
     w = np.sqrt(max(0, 1 + trace)) / 2.0
     x = (R[2,1] - R[1,2]) / (4.0 * w)
     y = (R[0,2] - R[2,0]) / (4.0 * w)
@@ -79,18 +40,7 @@ def rotm2quat(R):
 
 def quatmultiply(q1, q2):
     """
-    Multiply two quaternions.
-    Quaternion format: [w, x, y, z]
-
-    Parameters:
-    -----------
-    q1, q2 : 1D array-like
-        Quaternions in [w, x, y, z] format
-
-    Returns:
-    --------
-    q : 1D array, shape = (4,)
-        Result of the quaternion multiplication
+    Multiply two quaternions [w, x, y, z].
     """
     w1, x1, y1, z1 = q1
     w2, x2, y2, z2 = q2
@@ -104,16 +54,6 @@ def quatmultiply(q1, q2):
 def quatinv(q):
     """
     Inverse of a quaternion (assuming a unit quaternion).
-
-    Parameters:
-    -----------
-    q : 1D array
-        Quaternion [w, x, y, z]
-
-    Returns:
-    --------
-    q_inv : 1D array
-        Inverse of the quaternion
     """
     w, x, y, z = q
     return np.array([w, -x, -y, -z], dtype=float)
@@ -121,18 +61,6 @@ def quatinv(q):
 def compute_jacobian(joint_angles, dh_params):
     """
     Compute the geometric Jacobian for a manipulator given the current joint angles.
-    
-    Parameters:
-    -----------
-    joint_angles : 1D array-like
-        Joint angles in radians
-    dh_params : 2D array-like
-        DH parameters for each joint, shape = (N, 3)
-
-    Returns:
-    --------
-    J : 6xN numpy array
-        Jacobian matrix
     """
     num_joints = len(joint_angles)
     z_vectors = np.zeros((3, num_joints))
@@ -164,24 +92,12 @@ def compute_jacobian(joint_angles, dh_params):
 def rotation_to_rpy(R):
     """
     Convert a 3x3 rotation matrix to Roll-Pitch-Yaw (RPY) angles (XYZ convention).
-
-    Parameters:
-    -----------
-    R : 3x3 numpy array
-        Rotation matrix
-
-    Returns:
-    --------
-    rpy : 1D array, shape = (3,)
-        [roll, pitch, yaw] in radians
     """
-    # Protect against numerical issues
     if abs(R[2,0]) < 1:
         pitch = np.arcsin(-R[2,0])
         roll  = np.arctan2(R[2,1], R[2,2])
         yaw   = np.arctan2(R[1,0], R[0,0])
     else:
-        # Gimbal lock
         yaw = 0.0
         if R[2,0] <= -1:
             pitch = np.pi / 2
@@ -205,11 +121,7 @@ def main():
     ])
 
     # Initial joint values (theta) in radians (7 joints only)
-    initial_joint_positions = np.array([
-        -0.0070,  0.3027, -0.0309, 
-        -2.5290, -0.0224,  4.4196,  
-         0.7622
-    ])
+    initial_joint_positions = np.array([-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481])
 
     # Forward Kinematics for initial pose
     T = forward_kinematics(initial_joint_positions, dh_params[:7, :])
@@ -223,15 +135,19 @@ def main():
     n_steps = 10
     desired_positions = np.tile(current_position, (n_steps, 1))
     desired_positions[:, 1] = np.linspace(current_position[1], 
-                                          current_position[1] + 0.1, 
+                                          current_position[1] + 0.05, 
                                           n_steps)
 
     # Desired orientation remains the same
     q_desired = q_current.copy()
 
-    # Store the trajectory
+    # Store the trajectory (position, orientation, and also joint angles)
     trajectory = [current_position.copy()]
     trajectory_ori = [rotation_to_rpy(current_orientation)]
+    
+    # Store the joint angles at each step
+    joint_trajectory = []
+    joint_trajectory.append(initial_joint_positions.copy())
 
     # Iterative IK variables
     joint_positions = initial_joint_positions.copy()
@@ -250,7 +166,7 @@ def main():
             current_position    = T_current[0:3, 3]
             current_orientation = T_current[0:3, 0:3]
 
-            # Position error (force strictly +Y motion)
+            # Position error (no zeroing out X,Z here)
             position_error = desired_position - current_position
 
             # Orientation error
@@ -270,12 +186,15 @@ def main():
             delta_theta = np.linalg.pinv(J) @ full_error
             joint_positions += delta_theta
 
+        # After finishing the step, record end-effector and joint angles
         trajectory.append(current_position.copy())
         trajectory_ori.append(rotation_to_rpy(current_orientation))
+        joint_trajectory.append(joint_positions.copy())
 
     # Convert lists to numpy arrays for plotting
     trajectory = np.array(trajectory)
     trajectory_ori = np.array(trajectory_ori)
+    joint_trajectory = np.array(joint_trajectory)
 
     # ------------------------------
     # Plot Position and Orientation
@@ -308,6 +227,19 @@ def main():
 
     plt.tight_layout()
     plt.show()
+
+    # --------------------------------
+    # Print or otherwise inspect joint angles
+    # --------------------------------
+    # print("Joint positions per step (radians):")
+    # for i, jp in enumerate(joint_trajectory):
+    #     print(f"{jp}")
+
+    print("Joint positions per step (radians):")
+    for i, jp in enumerate(joint_trajectory):
+        # Format each joint angle with 4 decimal places, for example
+        jp_str = ", ".join([f"{val:.4f}" for val in jp])
+        print(f"[{jp_str}]")
 
 if __name__ == "__main__":
     main()

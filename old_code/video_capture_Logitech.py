@@ -27,7 +27,7 @@ if not out.isOpened():
 
 # Start time of the recording
 start_time = time.time()
-record_duration = 170  # Duration in seconds
+record_duration = 1700  # Duration in seconds
 
 print(f"Recording from Logitech camera (/dev/video{camera_index})... Press 'q' to stop early.")
 
@@ -38,8 +38,8 @@ while True:
         break
 
 
-    # Flip the frame vertically
-    flipped_frame = cv2.flip(frame, 1)
+    # Flip the frame horizontally + vertically
+    flipped_frame = cv2.flip(frame, -2)
 
     # Write the frame to the output file
     out.write(flipped_frame)
