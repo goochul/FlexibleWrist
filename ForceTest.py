@@ -112,7 +112,7 @@ def save_to_csv(force_data, torque_data, base_path="data"):
 
 # Main function
 def main():
-    sensor = ForceSensor("/dev/ttyUSB1", np.zeros(3), np.zeros(3))
+    sensor = ForceSensor("/dev/ttyUSB0", np.zeros(3), np.zeros(3))
     sensor.force_sensor_setup()
 
     # Calibration phase
