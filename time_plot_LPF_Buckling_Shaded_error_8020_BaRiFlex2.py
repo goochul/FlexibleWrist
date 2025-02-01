@@ -6,16 +6,20 @@ from scipy.stats import linregress
 import numpy as np
 import os
 
-title_name = "Filtered Force Magnitude and Offset Z Position with Buckling Point - thickness 1.2mm, angle 140 degrees, h = 11mm"
+title_name = "Filtered Force and Z Position with Buckling Point - thickness 1.0mm, angle 140 degrees, h = 11mm, Wc_2"
+save_fig = True  # Set to True or False as needed
+# save_fig = False  # Set to True or False as needed
 
 # List of file paths
 file_paths = [
+    #Stiffness: 475.48, buckling point: 7.90N, 0.0176m, thickness: 1.2mm. + Screw fixature
     # Path('data/20241127/134210/'),
     # Path('data/20241127/134523/'),
     # Path('data/20241127/134949/'),
     # Path('data/20241127/135401/'),
     # Path('data/20241127/135820/'),
 
+    #Stiffness: 360, buckling point: 6.35N, 0.0176m, thickness: 1.0mm. + non-Screw fixature
     # Path('data/20241212/172441/'),
     # Path('data/20241212/173819/'),
 
@@ -42,6 +46,7 @@ file_paths = [
     # Path('data/20241222/180110/'),
     # Path('data/20241222/181804/'),
 
+    #Stiffness: 442.25, buckling point: 7.77N, 0.0176m, thickness: 1.2mm.
     # Path('data/20241222/183159/'),
     # Path('data/20241222/184139/'),
     # Path('data/20241222/184610/'),
@@ -49,6 +54,18 @@ file_paths = [
 
     # Path('data/20241222/192835/'),
 
+    # Stiffness: 525~530, buckling point: 6,23N, 0.0117m. thicnkness : 1.0mm, Dc = 5.3
+    # Path('data/20250125/195157/'),
+    # Path('data/20250125/200941/'),
+    # Path('data/20250125/201549/'),
+
+    # Stiffness: 450, buckling point: 5.84N, 0.0129m. thicnkness : 1.0mm, Dc = 2.85
+    # Path('data/20250125/204349/'),
+    # Path('data/20250125/205003/'),
+
+
+    # Stiffness: 362, buckling point: 8.43N, 0.0233m. thicnkness : 1.0mm
+    Path('data/20250125/213042/'),
     Path('data/20250125/213735/'),
 ]
 
@@ -334,6 +351,21 @@ if valid_touching_times and valid_touching_z_positions:
     # Mark the intersection point on the mean_z line
     ax2.scatter(intersection_x, mean_z_at_buckling, color="red", label=f"Z-position value at Buckling Point ({mean_z_at_buckling:.4f})")
 
+    # Calculate the ratio
+    stiffness = mean_force_at_buckling / -mean_z_at_buckling
+
+    print(f"force: {mean_force_at_buckling:.5f}")
+    print(f"disp: {mean_z_at_buckling:.5f}")
+
+    # Print using f-string formatting:
+    #   - .2f means 2 decimal places
+    print(f"Stiffness: {stiffness:.3f}")
+
+# Mark Stiffness line
+    ax2.text(intersection_x -5, -mean_z_at_buckling/2,
+            f"Stiffness:\n {stiffness:.3f}",
+            color="black", fontsize=10, ha="center", bbox=dict(facecolor='white', alpha=0.7))
+
     # Add title and legend
     ax1.set_title(title_name)
     lines1, labels1 = ax1.get_legend_handles_labels()
@@ -474,8 +506,19 @@ for ax in axs:
     ax.grid(True)
 
 # Save the figure
-# plt.savefig('buckling_point_analysis.png', dpi=300, bbox_inches='tight')
+common = os.path.commonpath([str(p) for p in file_paths])
+common_path = Path(common)  # Convert to a Path object
+safe_title_name = title_name.replace(" ", "_").replace(":", "-")
+save_path = common_path / f"{safe_title_name}.png"
+# Save the figure if savefig is True
+if save_fig:
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    print(f"Figure saved to: {save_path}")
+else:
+    print("Figure not saved.")
 
 # Show the plot
 plt.tight_layout()
 plt.show()
+
+# print()
