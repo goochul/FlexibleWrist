@@ -6,7 +6,7 @@ from scipy.stats import linregress
 import numpy as np
 import os
 
-title_name = "Filtered Force and Z Position with Buckling Point - thickness 1.0mm, angle 140 degrees, h = 11mm, Wc_2"
+title_name = "Filtered Force and Z Position with Buckling Point - thickness 1.2mm, angle 170 degrees, h = 11mm, Dc = 5.3"
 save_fig = True  # Set to True or False as needed
 # save_fig = False  # Set to True or False as needed
 
@@ -65,8 +65,14 @@ file_paths = [
 
 
     # Stiffness: 362, buckling point: 8.43N, 0.0233m. thicnkness : 1.0mm
-    Path('data/20250125/213042/'),
-    Path('data/20250125/213735/'),
+    # Path('data/20250125/213042/'),
+    # Path('data/20250125/213735/'),
+    
+    # Stiffness: 539, buckling point: 8.46N, 0.0159m. thicnkness : 1.2mm, Dc = 5.3
+    # Path('data/20250201/122434/'),
+    Path('data/20250201/123222/'),
+    Path('data/20250201/123837/'),
+    Path('data/20250201/125158/'),
 ]
 
 
