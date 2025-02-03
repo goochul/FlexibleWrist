@@ -11,9 +11,14 @@ if not cap.isOpened():
     print(f"Failed to open the Logitech camera at /dev/video{camera_index}.")
     exit()
 
+cap.set(cv2.CAP_PROP_AUTOFOCUS, 1)
+new_af = cap.get(cv2.CAP_PROP_AUTOFOCUS)
+print("New autofocus setting:", new_af)
+
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 frame_rate = 30  # Desired frame rate
+
 
 # Set up the codec and output file name
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
