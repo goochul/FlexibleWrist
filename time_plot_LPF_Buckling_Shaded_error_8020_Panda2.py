@@ -6,6 +6,10 @@ from scipy.stats import linregress
 import numpy as np
 import os
 
+title_name = "Filtered Force and Z Position with Buckling Point - thickness 0.9mm, angle 100 degrees, h = 11mm, Dc = 5.3"
+save_fig = True  # Set to True or False as needed
+# save_fig = False  # Set to True or False as needed
+
 # List of file paths
 file_paths = [
 
@@ -333,8 +337,23 @@ if valid_touching_times and valid_touching_z_positions:
             mean_z_at_buckling + std_z_at_buckling,
             colors='red', linestyles='dotted', label=f"Std Dev Range at Buckling ({std_z_at_buckling:.4f})")
 
+    # Calculate the ratio
+    stiffness = mean_force_at_buckling / -mean_z_at_buckling
+
+    print(f"force: {mean_force_at_buckling:.5f}")
+    print(f"disp: {mean_z_at_buckling:.5f}")
+
+    # Print using f-string formatting:
+    #   - .2f means 2 decimal places
+    print(f"Stiffness: {stiffness:.3f}")
+
+# Mark Stiffness line
+    ax2.text(intersection_x -5, -mean_z_at_buckling/2,
+            f"Stiffness:\n {stiffness:.3f}",
+            color="black", fontsize=10, ha="center", bbox=dict(facecolor='white', alpha=0.7))
+
     # Add title and legend
-    ax1.set_title("Filtered Force Magnitude and Offset Z Position with Buckling Point - Panda W/O Screws")
+    ax1.set_title(title_name)
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
@@ -551,8 +570,19 @@ for ax in axs:
     ax.grid(True)
 
 # Save the figure
-# plt.savefig('buckling_point_analysis.png', dpi=600, bbox_inches='tight')
+common = os.path.commonpath([str(p) for p in file_paths])
+common_path = Path(common)  # Convert to a Path object
+safe_title_name = title_name.replace(" ", "_").replace(":", "-")
+save_path = common_path / f"{safe_title_name}.png"
+# Save the figure if savefig is True
+if save_fig:
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    print(f"Figure saved to: {save_path}")
+else:
+    print("Figure not saved.")
 
 # Show the plot
 plt.tight_layout()
 plt.show()
+
+# print()
