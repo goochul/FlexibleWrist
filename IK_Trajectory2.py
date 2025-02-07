@@ -132,10 +132,10 @@ def main():
     q_current = rotm2quat(current_orientation)
 
     # Move +Y by 0.1 m in 10 steps
-    n_steps = 10
+    n_steps = 30
     desired_positions = np.tile(current_position, (n_steps, 1))
     desired_positions[:, 1] = np.linspace(current_position[1], 
-                                          current_position[1] + 0.05, 
+                                          current_position[1] - 0.05, 
                                           n_steps)
 
     # Desired orientation remains the same

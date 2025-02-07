@@ -31,8 +31,8 @@ initial_eef_position = None
 max_samples = 2000
 video_duration = 150
 pressing_time = 90
-rs_camera_index = 4
-Nexigo_camera_index = 6
+rs_camera_index = 6
+Nexigo_camera_index = 0
 force_threshold = 50
 torque_threshold = 5
 force_max = 20  # Set the force_max threshold here
@@ -44,12 +44,20 @@ stop_monitoring = threading.Event()
 movement_done = threading.Event()
 recording_done = threading.Event()
 
-# Parse command-line arguments
+# Parse command-line arguments (added options to enable/disable FT sensor and camera)
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--interface-cfg", type=str, default="charmander.yml")
     parser.add_argument("--controller-cfg", type=str, default="joint-position-controller.yml")
     parser.add_argument("--controller-type", type=str, default="OSC_POSE")
+    # FT sensor toggle: default is enabled. Use --disable-ft-sensor to disable.
+    parser.add_argument("--enable-ft-sensor", dest="enable_ft_sensor", action="store_true", help="Enable force-torque sensor monitoring")
+    parser.add_argument("--disable-ft-sensor", dest="enable_ft_sensor", action="store_false", help="Disable force-torque sensor monitoring")
+    parser.set_defaults(enable_ft_sensor=True)
+    # Camera toggle: default is enabled. Use --disable-camera to disable.
+    parser.add_argument("--enable-camera", dest="enable_camera", action="store_true", help="Enable camera recording")
+    parser.add_argument("--disable-camera", dest="enable_camera", action="store_false", help="Disable camera recording")
+    parser.set_defaults(enable_camera=False)
     return parser.parse_args()
 
 # FT Sensor Functions
@@ -189,7 +197,6 @@ def record_video(output_path, duration, fps=30, camera_index=rs_camera_index):
 def return_to_initial_position(robot_interface, controller_cfg):
     print("Returning to initial joint positions.")
     reset_joint_positions = [-0.0089260, 0.3819599, -0.0253966, -2.1973930, -0.0307321, 4.1700501, 0.7718912]
-    #[-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
     move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg)
     print("Returning to initial position.")
 
@@ -260,63 +267,17 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
 
 def joint_position_control(robot_interface, controller_cfg):
     reset_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] 
-    # [-0.0035, 0.3793, 0.0874, -2.1860, -0.0769, 4.1755, 0.8052]
-    # [-0.00805785,  0.46225722, -0.0245614,  -2.18755885, -0.02669979,  4.24048583, 0.76958523]
-    # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
     des_joint_positions = [ 0.0829,  0.3743,  0.0095, -2.1916,  0.1147,  4.1596, 0.6802]
-
-    #BaRiFlex
-    # [-0.00817004,  0.584347,   -0.02353005, -2.15728207, -0.01831063,  4.33053075,  0.76582103]
-
-    # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]              # Alimunum Frame origin for Panda
-    # [-0.00767597,  0.51022177, -0.02485,    -2.17755938, -0.02581892,  4.27849113,  0.76947171]   # -10mm
-    # [-0.00744893,  0.52245477, -0.02512409, -2.17452938, -0.02589844,  4.28777901,  0.76955813]   # -15mm
-    # [-0.00764558,  0.534649,   -0.02463884, -2.17151983, -0.02343242,  4.29640372,  0.76849901]   # -20mm
-    # [-0.00749242,  0.54708303, -0.0248903,  -2.16802759, -0.02433914,  4.30569219,  0.76901974]   # -25mm
-    # [-0.00786796,  0.55953669, -0.0245075,  -2.16437121, -0.02514699,  4.31473024, 0.76914151]    # -30mm
-    # [-0.0075991,   0.57211732, -0.02482249, -2.1605095,  -0.02561976,  4.32375554,  0.76977484]   # -35mm
-    # [-0.00817004,  0.584347,   -0.02353005, -2.15728207, -0.01831063,  4.33053075,  0.76582103]   # -40mm
-    # [-0.00817453,  0.58435545, -0.02352894, -2.15726601, -0.01829912,  4.33055562,  0.76575631]   # -45mm
-
-
-    # Aluminum Frame Test data for BaRiFlex
-    # [-0.0070, 0.3027, -0.0309, -2.5290, -0.0224, 4.4196, 0.7622] # -100mm
-    # [-0.0320, 0.3165, 0.1432, -2.5073, -0.0062, 4.4658, 0.7303] # x:-100mm y:+50mm
-
-    # [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] # +50mm
-    # [-0.0035351, 0.3792675, 0.0874464, -2.1860231, -0.0768626, 4.1755263, 0.8051557] # +50, y+50mm
-    # [-0.0361684, 0.3696956, -0.1066069, -2.2031991, 0.0345756, 4.1004231, 0.7635921] # +50, y-50mm
-
-    # [-0.0070638, 0.4045377, -0.0261955, -2.1954542, -0.0307219, 4.1911784, 0.7720917] # +35mm
-    # [-4.05929033  5.96273218  4.37821715], Torque offset: [-0.53837778 -0.90015364  0.19576906]    # +20mm
-    # [-0.0079944, 0.4505116, -0.0247087, -2.1895460, -0.0272609, 4.2308043, 0.7698502]   # +15mm
-    # [-0.0081320, 0.4574915, -0.0243838, -2.1884906, -0.0256979, 4.2363219, 0.7690181]   # +12mm
-    # [-0.0080579, 0.4622572, -0.0245614, -2.1875589, -0.0266998, 4.2404858, 0.7695852]   # +10mm
-    # [-0.00805785,  0.46225722, -0.0245614,  -2.18755885, -0.02669979,  4.24048583, 0.76958523]    # +5mm
-    # [-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]     # touching
-    # [-0.00767597,  0.51022177, -0.02485,    -2.17755938, -0.02581892,  4.27849113,  0.76947171]   # -10mm
-    # [-0.00744893,  0.52245477, -0.02512409, -2.17452938, -0.02589844,  4.28777901,  0.76955813]   # -15mm
-    # [-0.00764558,  0.534649,   -0.02463884, -2.17151983, -0.02343242,  4.29640372,  0.76849901]   # -20mm
-    # [-0.00749242,  0.54708303, -0.0248903,  -2.16802759, -0.02433914,  4.30569219,  0.76901974]   # -25mm
-    # [-0.00786796,  0.55953669, -0.0245075,  -2.16437121, -0.02514699,  4.31473024, 0.76914151]    # -30mm
-    # [-0.0075991,   0.57211732, -0.02482249, -2.1605095,  -0.02561976,  4.32375554,  0.76977484]   # -35mm
-    # [-0.00817004,  0.584347,   -0.02353005, -2.15728207, -0.01831063,  4.33053075,  0.76582103]   # -40mm
-    # [-0.00817453,  0.58435545, -0.02352894, -2.15726601, -0.01829912,  4.33055562,  0.76575631]   # -45mm
-
-    # [-0.0082695, 0.4158108, -0.0246369, -2.1943346, -0.0289646, 4.2010173, 0.7705609]
 
     move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg)
     if stop_movement.is_set():
         return
     time.sleep(1)
-    #event label = 1 => loading phase. 2 => unloading phase
+    # event label = "1" => loading phase. "2" => unloading phase
     move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg, event_label="1")
     if stop_movement.is_set():
         return
     
-    # move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg)
-    # move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg)
-    # move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg)
     move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg, event_label="2")
     movement_done.set()
 
@@ -347,12 +308,11 @@ def save_data_to_csv():
         force_df.to_csv(os.path.join(data_folder, "force_data.csv"), index=False)
 
     # Save end-effector positions (X, Y, Z) to CSV
-    # Format: Timestamp, X, Y, Z
     if eef_positions:
         eef_df = pd.DataFrame(eef_positions, columns=["Timestamp", "X_Offset", "Y_Offset", "Z_Offset"])
         eef_df.to_csv(os.path.join(data_folder, "eef_positions.csv"), index=False)
 
-    # Maintain the existing Z-position CSV if desired
+    # Save Z-position CSV
     z_pos_df = pd.DataFrame({"Timestamp": timestamps, "Z Position": z_positions, "Event": None})
     for timestamp, event in event_markers:
         closest_index = (z_pos_df["Timestamp"] - timestamp).abs().idxmin()  
@@ -372,7 +332,6 @@ def save_data_to_csv():
 
     print(f"Data saved to folder: {data_folder}")
     return data_folder
-
 
 def plot_merged_data(data_folder):
     # First Figure: Fx, Fy, Fz, Force Magnitude with Z-position
@@ -403,7 +362,6 @@ def plot_merged_data(data_folder):
         ax2 = ax1.twinx()
         ax2.plot(timestamps, z_positions, label="Z Position", color='tab:purple', marker='o', markersize=2)
 
-        # Calculate the limits dynamically for Z position
         max_z_position = max(abs(val) for val in z_positions)
         ax2.set_ylim([-max_z_position - 0.0025, max_z_position + 0.0025])
 
@@ -422,18 +380,17 @@ def plot_merged_data(data_folder):
     fig2, ax3 = plt.subplots()
 
     if torque_data:
-        times = [entry[0] for entry in torque_data]  # Extract timestamps
-        Tx = [entry[1] for entry in torque_data]     # Extract Tx
-        Ty = [entry[2] for entry in torque_data]     # Extract Ty
-        Tz = [entry[3] for entry in torque_data]     # Extract Tz
-        torque_magnitudes = [entry[4] for entry in torque_data]  # Extract torque magnitudes
+        times = [entry[0] for entry in torque_data]
+        Tx = [entry[1] for entry in torque_data]
+        Ty = [entry[2] for entry in torque_data]
+        Tz = [entry[3] for entry in torque_data]
+        torque_magnitudes = [entry[4] for entry in torque_data]
 
         ax3.plot(times, Tx, label="Tx", color='tab:blue')
         ax3.plot(times, Ty, label="Ty", color='tab:orange')
         ax3.plot(times, Tz, label="Tz", color='tab:green')
         ax3.plot(times, torque_magnitudes, label="Torque Magnitude", color='tab:red', linestyle='--', linewidth=1)
 
-        # Calculate the limits dynamically
         max_torque_magnitude = max(abs(val) for val in torque_magnitudes)
         ax3.set_ylim([-(max_torque_magnitude + 5), max_torque_magnitude + 5])
 
@@ -446,7 +403,6 @@ def plot_merged_data(data_folder):
         ax4 = ax3.twinx()
         ax4.plot(timestamps, z_positions, label="Z Position", color='tab:purple', marker='o', markersize=2)
 
-        # Calculate the limits dynamically for Z position
         max_z_position = max(abs(val) for val in z_positions)
         ax4.set_ylim([-max_z_position - 0.0025, max_z_position + 0.0025])
 
@@ -485,29 +441,14 @@ def plot_merged_data(data_folder):
         plt.close(fig3)
 
         print(f"Offset end-effector position plot saved to {eef_plot_path}")
-
-
     # -------------------------------------------------------------------
 
     print("All plots generated.")
-
 
 def main():
     global global_start_time, force_sensor
 
     args = parse_args()
-
-    # Initialize the sensor for calibration
-    sensor = initialize_force_sensor_for_calibration()
-    if sensor is None:
-        print("Sensor initialization failed. Exiting...")
-        return
-
-    # Perform calibration
-    force_offset, torque_offset = calibrate_force_sensor(sensor)
-    if force_offset is None or torque_offset is None:
-        print("Calibration failed. Exiting...")
-        return
 
     # Begin robot interface setup
     try:
@@ -519,8 +460,6 @@ def main():
         print(f"Robot interface initialization failed: {e}")
         return
 
-    # print(joint_controller_cfg.joint_kp)
-
     global_start_time = time.time()
 
     # Create data folder path
@@ -529,27 +468,45 @@ def main():
     data_folder = os.path.join("data", date_folder, time_folder)
     os.makedirs(data_folder, exist_ok=True)
 
-    # # Start video recording thread
-    # video_output_path = os.path.join(data_folder, "realsense_recording.mp4")
-    # video_thread = threading.Thread(target=record_video, args=(video_output_path, video_duration, 30, rs_camera_index), daemon=True)
-    # video_thread.start()
+    # Start video recording thread if camera is enabled
+    if args.enable_camera:
+        video_output_path = os.path.join(data_folder, "realsense_recording.mp4")
+        video_thread = threading.Thread(target=record_video, args=(video_output_path, video_duration, 30, rs_camera_index), daemon=True)
+        video_thread.start()
+    else:
+        print("Camera recording disabled.")
 
-    # Start monitoring thread
-    monitoring_thread = threading.Thread(
-        target=monitor_ft_sensor,
-        args=(robot_interface, joint_controller_cfg, args.controller_type, osc_controller_cfg, sensor, force_offset, torque_offset),
-        daemon=True
-    )
-    monitoring_thread.start()
+    # If FT sensor is enabled, initialize and calibrate, then start monitoring thread.
+    if args.enable_ft_sensor:
+        sensor = initialize_force_sensor_for_calibration()
+        if sensor is None:
+            print("Sensor initialization failed. Exiting...")
+            return
+
+        force_offset, torque_offset = calibrate_force_sensor(sensor)
+        if force_offset is None or torque_offset is None:
+            print("Calibration failed. Exiting...")
+            return
+
+        monitoring_thread = threading.Thread(
+            target=monitor_ft_sensor,
+            args=(robot_interface, joint_controller_cfg, args.controller_type, osc_controller_cfg, sensor, force_offset, torque_offset),
+            daemon=True
+        )
+        monitoring_thread.start()
+    else:
+        print("FT sensor monitoring disabled.")
 
     # Start movement thread
     movement_thread = threading.Thread(target=joint_position_control, args=(robot_interface, joint_controller_cfg), daemon=True)
     movement_thread.start()
 
     # Wait for threads to finish
-    monitoring_thread.join()
+    if args.enable_ft_sensor:
+        monitoring_thread.join()
     movement_thread.join()
-    # video_thread.join()  # Ensure video thread finishes
+    if args.enable_camera:
+        video_thread.join()
 
     # Save and plot data after threads finish
     data_folder = save_data_to_csv()
@@ -559,4 +516,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

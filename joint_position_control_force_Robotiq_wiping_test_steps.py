@@ -28,12 +28,12 @@ global_start_time = None
 force_sensor = None
 initial_z_position = None
 initial_eef_position = None
-max_samples = 2000
+max_samples = 4000
 video_duration = 150
-pressing_time = 90
-rs_camera_index = 4
-Nexigo_camera_index = 6
-force_threshold = 50
+pressing_time = 2
+rs_camera_index = 6
+Nexigo_camera_index = 0
+force_threshold = 5
 torque_threshold = 5
 force_max = 20  # Set the force_max threshold here
 eef_title = "Offset End-Effector Positions (X, Y, Z) Over Time with 2x Kp"
@@ -44,12 +44,20 @@ stop_monitoring = threading.Event()
 movement_done = threading.Event()
 recording_done = threading.Event()
 
-# Parse command-line arguments
+# Parse command-line arguments (added options to enable/disable FT sensor and camera)
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--interface-cfg", type=str, default="charmander.yml")
     parser.add_argument("--controller-cfg", type=str, default="joint-position-controller.yml")
     parser.add_argument("--controller-type", type=str, default="OSC_POSE")
+    # FT sensor toggle: default is disabled here. Use --enable-ft-sensor to enable.
+    parser.add_argument("--enable-ft-sensor", dest="enable_ft_sensor", action="store_true", help="Enable force-torque sensor monitoring")
+    parser.add_argument("--disable-ft-sensor", dest="enable_ft_sensor", action="store_false", help="Disable force-torque sensor monitoring")
+    parser.set_defaults(enable_ft_sensor=True)
+    # Camera toggle: default is disabled here. Use --enable-camera to enable.
+    parser.add_argument("--enable-camera", dest="enable_camera", action="store_true", help="Enable camera recording")
+    parser.add_argument("--disable-camera", dest="enable_camera", action="store_false", help="Disable camera recording")
+    parser.set_defaults(enable_camera=False)
     return parser.parse_args()
 
 # FT Sensor Functions
@@ -189,7 +197,6 @@ def record_video(output_path, duration, fps=30, camera_index=rs_camera_index):
 def return_to_initial_position(robot_interface, controller_cfg):
     print("Returning to initial joint positions.")
     reset_joint_positions = [-0.0089260, 0.3819599, -0.0253966, -2.1973930, -0.0307321, 4.1700501, 0.7718912]
-    #[-0.0075636, 0.486079, -0.0250772, -2.182928, -0.0263943, 4.2597242, 0.76971342]
     move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg)
     print("Returning to initial position.")
 
@@ -202,16 +209,46 @@ def get_end_effector_position(robot_interface):
 def get_joint_data(robot_interface):
     return robot_interface._state_buffer[-1].q, robot_interface._state_buffer[-1].dq
 
-# Add this global variable
+# Global variable to mark events (used in plotting)
 event_markers = []
 
+def smooth_move_to_position(robot_interface, current_pos, target_pos, controller_cfg, duration=3.0, steps=100):
+    """
+    Interpolates a smooth trajectory between the current joint positions and the target joint positions.
+    The interpolation is done in 'steps' steps over 'duration' seconds.
+    """
+    print("Regenerating a smooth trajectory to avoid sudden movement...")
+    for i in range(1, steps + 1):
+        # Linear interpolation for each joint:
+        interp_pos = current_pos + (target_pos - current_pos) * (i / steps)
+        action = list(interp_pos) + [-1.0]
+        robot_interface.control(controller_type="JOINT_POSITION", action=action, controller_cfg=controller_cfg)
+        time.sleep(duration / steps)
+
 def move_to_position(robot_interface, target_positions, controller_cfg, event_label=None):
+    """
+    Moves the robot toward the target joint positions. If the current configuration is far from the target 
+    (for example, due to external interference), this function regenerates a smooth trajectory to slow down 
+    the motion and avoid a sudden jump.
+    """
     global initial_eef_position, eef_positions, event_markers
     action = list(target_positions) + [-1.0]
     start_time = time.time()
 
     if event_label:
         event_markers.append((time.time() - global_start_time, event_label))
+
+    # Get the current joint position (if available)
+    if len(robot_interface._state_buffer) > 0:
+        current_joint_pos, _ = get_joint_data(robot_interface)
+    else:
+        current_joint_pos = target_positions  # fallback if no data is available
+
+    # If the difference is large, regenerate a smooth trajectory.
+    # (Threshold here can be tuned – here we check if any joint difference exceeds 0.05 rad.)
+    # if np.any(np.abs(np.array(target_positions) - np.array(current_joint_pos)) > 0.05):
+    #     smooth_move_to_position(robot_interface, np.array(current_joint_pos), np.array(target_positions), controller_cfg, duration=3.0, steps=100)
+    #     return
 
     while True:
         if stop_movement.is_set():
@@ -238,7 +275,7 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
             # Store offset (x, y, z) in eef_positions
             eef_positions.append((current_time, offset_x, offset_y, offset_z))
 
-            # Also store the Z offset in z_positions, if you wish to keep that
+            # Also store the Z offset in z_positions, if desired
             z_positions.append(offset_z)
             timestamps.append(current_time)
 
@@ -246,7 +283,7 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
             if time.time() - start_time > pressing_time:
                 print("Timeout reached. Breaking loop.")
                 break
-            if np.max(position_error) < 2e-3:
+            if np.max(position_error) < 1e-4:
                 print("Position error is small. Breaking loop.")
                 break
 
@@ -258,65 +295,103 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
 
         time.sleep(0.01)
 
-import numpy as np
-import time
-
+# ---------------------------------------------------------------------------
+# Discrete Trajectory: Step-by-Step Joint Position Control
+# ---------------------------------------------------------------------------
 def joint_position_control(robot_interface, controller_cfg):
     """
-    Example function that moves the robot through a series of joint positions,
-    step by step, during the loading phase, then returns it step by step during
-    the unloading phase.
+    Moves the robot through a discrete sequence of joint positions.
+    
+    The trajectory is split into a loading phase (step-by-step moves) and an unloading phase
+    (which returns through the reverse of the loading positions).
     """
-
-    # Example step-by-step joint positions for the "loading phase"
+    # Define a series of discrete positions for the loading phase
     loading_positions = [
-        [-0.0088,  0.3710, -0.0241, -2.1981, -0.0297,  4.1598, 0.7708],
-        [-0.0088,  0.3710, -0.0241, -2.1981, -0.0297,  4.1598, 0.7708],
-        [ 0.0014,  0.3706, -0.0204, -2.1988, -0.0137,  4.1598, 0.7608],
-        [ 0.0116,  0.3704, -0.0166, -2.1991,  0.0024,  4.1597, 0.7507],
-        [ 0.0218,  0.3704, -0.0129, -2.1990,  0.0185,  4.1596, 0.7406],
-        [ 0.0320,  0.3706, -0.0091, -2.1986,  0.0346,  4.1596, 0.7306],
-        [ 0.0422,  0.3710, -0.0054, -2.1978,  0.0506,  4.1596, 0.7205],
-        [ 0.0524,  0.3716, -0.0016, -2.1968,  0.0667,  4.1596, 0.7104],
-        [ 0.0626,  0.3723,  0.0021, -2.1954,  0.0827,  4.1596, 0.7004],
-        [ 0.0728,  0.3732,  0.0058, -2.1937,  0.0987,  4.1596, 0.6903],
-        [ 0.0829,  0.3743,  0.0095, -2.1916,  0.1147,  4.1596, 0.6802],
+    [-0.0088, 0.3710, -0.0241, -2.1981, -0.0297, 4.1598, 0.7708],
+    [-0.0088, 0.3710, -0.0241, -2.1981, -0.0297, 4.1598, 0.7708],
+    [-0.0119, 0.3711, -0.0253, -2.1979, -0.0347, 4.1598, 0.7740],
+    [-0.0151, 0.3713, -0.0265, -2.1976, -0.0397, 4.1598, 0.7771],
+    [-0.0183, 0.3714, -0.0276, -2.1973, -0.0447, 4.1598, 0.7802],
+    [-0.0214, 0.3716, -0.0288, -2.1969, -0.0496, 4.1598, 0.7834],
+    [-0.0246, 0.3718, -0.0299, -2.1966, -0.0546, 4.1598, 0.7865],
+    [-0.0278, 0.3720, -0.0311, -2.1962, -0.0596, 4.1598, 0.7896],
+    [-0.0309, 0.3723, -0.0323, -2.1958, -0.0646, 4.1599, 0.7927],
+    [-0.0341, 0.3725, -0.0334, -2.1953, -0.0695, 4.1599, 0.7959],
+    [-0.0373, 0.3728, -0.0346, -2.1948, -0.0745, 4.1599, 0.7990],
+    [-0.0404, 0.3731, -0.0357, -2.1943, -0.0795, 4.1599, 0.8021],
+    [-0.0436, 0.3734, -0.0369, -2.1937, -0.0844, 4.1599, 0.8053],
+    [-0.0468, 0.3738, -0.0380, -2.1931, -0.0894, 4.1599, 0.8084],
+    [-0.0499, 0.3741, -0.0392, -2.1925, -0.0943, 4.1599, 0.8115],
+    [-0.0531, 0.3745, -0.0403, -2.1919, -0.0993, 4.1599, 0.8147],
+    [-0.0562, 0.3748, -0.0415, -2.1912, -0.1042, 4.1600, 0.8178],
+    [-0.0594, 0.3752, -0.0426, -2.1905, -0.1092, 4.1600, 0.8210],
+    [-0.0626, 0.3756, -0.0437, -2.1897, -0.1141, 4.1600, 0.8241],
+    [-0.0657, 0.3761, -0.0449, -2.1890, -0.1191, 4.1600, 0.8273],
+    [-0.0689, 0.3765, -0.0460, -2.1881, -0.1240, 4.1600, 0.8304],
+    [-0.0720, 0.3770, -0.0472, -2.1873, -0.1290, 4.1600, 0.8335],
+    [-0.0752, 0.3775, -0.0483, -2.1864, -0.1339, 4.1601, 0.8367],
+    [-0.0783, 0.3780, -0.0494, -2.1855, -0.1388, 4.1601, 0.8398],
+    [-0.0815, 0.3785, -0.0505, -2.1846, -0.1437, 4.1601, 0.8430],
+    [-0.0847, 0.3790, -0.0517, -2.1836, -0.1486, 4.1601, 0.8461],
+    [-0.0878, 0.3796, -0.0528, -2.1826, -0.1536, 4.1601, 0.8493],
+    [-0.0910, 0.3801, -0.0539, -2.1816, -0.1585, 4.1602, 0.8525],
+    [-0.0941, 0.3807, -0.0550, -2.1806, -0.1634, 4.1602, 0.8556],
+    [-0.0972, 0.3813, -0.0561, -2.1795, -0.1683, 4.1602, 0.8588],
+    [-0.1004, 0.3819, -0.0572, -2.1784, -0.1732, 4.1602, 0.8619],
+
+
+    # [-0.0088, 0.3710, -0.0241, -2.1981, -0.0297, 4.1598, 0.7708],
+    # [-0.0088, 0.3710, -0.0241, -2.1981, -0.0297, 4.1598, 0.7708],
+    # [-0.0190, 0.3714, -0.0279, -2.1974, -0.0458, 4.1598, 0.7809],
+    # [-0.0292, 0.3721, -0.0316, -2.1962, -0.0618, 4.1598, 0.7910],
+    # [-0.0394, 0.3729, -0.0353, -2.1946, -0.0778, 4.1598, 0.8011],
+    # [-0.0496, 0.3739, -0.0391, -2.1928, -0.0938, 4.1599, 0.8112],
+    # [-0.0598, 0.3752, -0.0427, -2.1906, -0.1098, 4.1599, 0.8213],
+    # [-0.0699, 0.3765, -0.0464, -2.1880, -0.1257, 4.1599, 0.8314],
+    # [-0.0801, 0.3781, -0.0501, -2.1852, -0.1416, 4.1600, 0.8416],
+    # [-0.0903, 0.3799, -0.0537, -2.1820, -0.1574, 4.1601, 0.8518],
+    # [-0.1004, 0.3818, -0.0573, -2.1785, -0.1732, 4.1601, 0.8619],
+
+
+        # [-0.0088,  0.3710, -0.0241, -2.1981, -0.0297,  4.1598, 0.7708],
+        # [-0.0088,  0.3710, -0.0241, -2.1981, -0.0297,  4.1598, 0.7708],
+        # [ 0.0014,  0.3706, -0.0204, -2.1988, -0.0137,  4.1598, 0.7608],
+        # [ 0.0116,  0.3704, -0.0166, -2.1991,  0.0024,  4.1597, 0.7507],
+        # [ 0.0218,  0.3704, -0.0129, -2.1990,  0.0185,  4.1596, 0.7406],
+        # [ 0.0320,  0.3706, -0.0091, -2.1986,  0.0346,  4.1596, 0.7306],
+        # [ 0.0422,  0.3710, -0.0054, -2.1978,  0.0506,  4.1596, 0.7205],
+        # [ 0.0524,  0.3716, -0.0016, -2.1968,  0.0667,  4.1596, 0.7104],
+        # [ 0.0626,  0.3723,  0.0021, -2.1954,  0.0827,  4.1596, 0.7004],
+        # [ 0.0728,  0.3732,  0.0058, -2.1937,  0.0987,  4.1596, 0.6903],
+        # [ 0.0829,  0.3743,  0.0095, -2.1916,  0.1147,  4.1596, 0.6802],
     ]
 
-    # Example step-by-step joint positions for the "unloading phase"
-    # For simplicity, let's just reverse the above as an example.
-    # In a real use case, you'd define your own sequence.
+    # For the unloading phase, simply reverse the loading positions.
     unloading_positions = list(reversed(loading_positions))
 
-    # 1. Move to some "reset" or home position before starting (if desired)
-    reset_joint_positions = loading_positions[0]  # or any known 'safe' position
+    # 1. Move to a "reset" or home position before starting (we use the first position from the loading phase)
+    reset_joint_positions = loading_positions[0]
     move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg)
     if stop_movement.is_set():
         return
     time.sleep(0.5)
 
-    # -----------------------------------------------------------------------
-    # 2. Loading Phase (event_label="1")
-    #    Move through each position in the loading_positions list
-    # -----------------------------------------------------------------------
-    for idx, pos in enumerate(loading_positions):
+    # 2. Loading Phase (event label "1"): move through each discrete position.
+    for pos in loading_positions:
         move_to_position(robot_interface, np.array(pos), controller_cfg, event_label="1")
         if stop_movement.is_set():
             return
-        time.sleep(0.5)  # small delay between steps if needed
+        time.sleep(0.5)  # Optional delay between steps
 
-    # -----------------------------------------------------------------------
-    # 3. Unloading Phase (event_label="2")
-    #    Move through each position in the unloading_positions list
-    # -----------------------------------------------------------------------
-    move_to_position(robot_interface, reset_joint_positions, controller_cfg, event_label="2")
-    if stop_movement.is_set():
-        return
-    time.sleep(0.5)
-
-    # Finally, set the movement_done event if you have one
+    # 3. Unloading Phase (event label "2"): return along the reversed trajectory.
+    for pos in unloading_positions:
+        move_to_position(robot_interface, np.array(pos), controller_cfg, event_label="2")
+        if stop_movement.is_set():
+            return
+        time.sleep(0.5)
+    
+    # Finally, signal that movement is done.
     movement_done.set()
-
 
 # Gravity Compensation Function
 def perform_gravity_compensation(robot_interface, controller_type, controller_cfg):
@@ -345,12 +420,11 @@ def save_data_to_csv():
         force_df.to_csv(os.path.join(data_folder, "force_data.csv"), index=False)
 
     # Save end-effector positions (X, Y, Z) to CSV
-    # Format: Timestamp, X, Y, Z
     if eef_positions:
         eef_df = pd.DataFrame(eef_positions, columns=["Timestamp", "X_Offset", "Y_Offset", "Z_Offset"])
         eef_df.to_csv(os.path.join(data_folder, "eef_positions.csv"), index=False)
 
-    # Maintain the existing Z-position CSV if desired
+    # Save Z-position CSV
     z_pos_df = pd.DataFrame({"Timestamp": timestamps, "Z Position": z_positions, "Event": None})
     for timestamp, event in event_markers:
         closest_index = (z_pos_df["Timestamp"] - timestamp).abs().idxmin()  
@@ -371,7 +445,6 @@ def save_data_to_csv():
     print(f"Data saved to folder: {data_folder}")
     return data_folder
 
-
 def plot_merged_data(data_folder):
     # First Figure: Fx, Fy, Fz, Force Magnitude with Z-position
     fig1, ax1 = plt.subplots()
@@ -388,7 +461,6 @@ def plot_merged_data(data_folder):
         ax1.plot(times, Fz, label="Fz", color='tab:green')
         ax1.plot(times, force_magnitudes, label="Force Magnitude", color='tab:red', linestyle='--', linewidth=0.25)
 
-        # Calculate the limits dynamically
         max_force_magnitude = max(abs(val) for val in force_magnitudes)
         ax1.set_ylim([-(max_force_magnitude + 5), max_force_magnitude + 5])
 
@@ -400,11 +472,8 @@ def plot_merged_data(data_folder):
     if timestamps:
         ax2 = ax1.twinx()
         ax2.plot(timestamps, z_positions, label="Z Position", color='tab:purple', marker='o', markersize=2)
-
-        # Calculate the limits dynamically for Z position
         max_z_position = max(abs(val) for val in z_positions)
         ax2.set_ylim([-max_z_position - 0.0025, max_z_position + 0.0025])
-
         ax2.set_ylabel("Z Position (m)", color='tab:purple')
         ax2.legend(loc="upper right")
 
@@ -420,18 +489,16 @@ def plot_merged_data(data_folder):
     fig2, ax3 = plt.subplots()
 
     if torque_data:
-        times = [entry[0] for entry in torque_data]  # Extract timestamps
-        Tx = [entry[1] for entry in torque_data]     # Extract Tx
-        Ty = [entry[2] for entry in torque_data]     # Extract Ty
-        Tz = [entry[3] for entry in torque_data]     # Extract Tz
-        torque_magnitudes = [entry[4] for entry in torque_data]  # Extract torque magnitudes
+        times = [entry[0] for entry in torque_data]
+        Tx = [entry[1] for entry in torque_data]
+        Ty = [entry[2] for entry in torque_data]
+        Tz = [entry[3] for entry in torque_data]
+        torque_magnitudes = [entry[4] for entry in torque_data]
 
         ax3.plot(times, Tx, label="Tx", color='tab:blue')
         ax3.plot(times, Ty, label="Ty", color='tab:orange')
         ax3.plot(times, Tz, label="Tz", color='tab:green')
         ax3.plot(times, torque_magnitudes, label="Torque Magnitude", color='tab:red', linestyle='--', linewidth=1)
-
-        # Calculate the limits dynamically
         max_torque_magnitude = max(abs(val) for val in torque_magnitudes)
         ax3.set_ylim([-(max_torque_magnitude + 5), max_torque_magnitude + 5])
 
@@ -443,11 +510,8 @@ def plot_merged_data(data_folder):
     if timestamps:
         ax4 = ax3.twinx()
         ax4.plot(timestamps, z_positions, label="Z Position", color='tab:purple', marker='o', markersize=2)
-
-        # Calculate the limits dynamically for Z position
         max_z_position = max(abs(val) for val in z_positions)
         ax4.set_ylim([-max_z_position - 0.0025, max_z_position + 0.0025])
-
         ax4.set_ylabel("Z Position (m)", color='tab:purple')
         ax4.legend(loc="upper right")
 
@@ -459,7 +523,7 @@ def plot_merged_data(data_folder):
 
     print(f"Torque plot saved to {torque_plot_path}")
 
-    # ---------------- NEW PLOT FOR END-EFFECTOR X, Y, Z ----------------
+    # New Plot for End-Effector X, Y, Z offsets
     if eef_positions:
         fig3, ax5 = plt.subplots(figsize=(10, 6))
         times_eef = [pos[0] for pos in eef_positions]
@@ -470,7 +534,6 @@ def plot_merged_data(data_folder):
         ax5.plot(times_eef, x_off, label='X Offset', color='blue')
         ax5.plot(times_eef, y_off, label='Y Offset', color='orange')
         ax5.plot(times_eef, z_off, label='Z Offset', color='green')
-
         ax5.set_xlabel('Time (s)')
         ax5.set_ylabel('Position Offset (m)')
         ax5.legend(loc='upper left')
@@ -484,28 +547,12 @@ def plot_merged_data(data_folder):
 
         print(f"Offset end-effector position plot saved to {eef_plot_path}")
 
-
-    # -------------------------------------------------------------------
-
     print("All plots generated.")
-
 
 def main():
     global global_start_time, force_sensor
 
     args = parse_args()
-
-    # Initialize the sensor for calibration
-    sensor = initialize_force_sensor_for_calibration()
-    if sensor is None:
-        print("Sensor initialization failed. Exiting...")
-        return
-
-    # Perform calibration
-    force_offset, torque_offset = calibrate_force_sensor(sensor)
-    if force_offset is None or torque_offset is None:
-        print("Calibration failed. Exiting...")
-        return
 
     # Begin robot interface setup
     try:
@@ -517,8 +564,6 @@ def main():
         print(f"Robot interface initialization failed: {e}")
         return
 
-    # print(joint_controller_cfg.joint_kp)
-
     global_start_time = time.time()
 
     # Create data folder path
@@ -527,27 +572,45 @@ def main():
     data_folder = os.path.join("data", date_folder, time_folder)
     os.makedirs(data_folder, exist_ok=True)
 
-    # # Start video recording thread
-    # video_output_path = os.path.join(data_folder, "realsense_recording.mp4")
-    # video_thread = threading.Thread(target=record_video, args=(video_output_path, video_duration, 30, rs_camera_index), daemon=True)
-    # video_thread.start()
+    # Start video recording thread if camera is enabled
+    if args.enable_camera:
+        video_output_path = os.path.join(data_folder, "realsense_recording.mp4")
+        video_thread = threading.Thread(target=record_video, args=(video_output_path, video_duration, 30, rs_camera_index), daemon=True)
+        video_thread.start()
+    else:
+        print("Camera recording disabled.")
 
-    # Start monitoring thread
-    monitoring_thread = threading.Thread(
-        target=monitor_ft_sensor,
-        args=(robot_interface, joint_controller_cfg, args.controller_type, osc_controller_cfg, sensor, force_offset, torque_offset),
-        daemon=True
-    )
-    monitoring_thread.start()
+    # If FT sensor is enabled, initialize and calibrate, then start monitoring thread.
+    if args.enable_ft_sensor:
+        sensor = initialize_force_sensor_for_calibration()
+        if sensor is None:
+            print("Sensor initialization failed. Exiting...")
+            return
 
-    # Start movement thread
+        force_offset, torque_offset = calibrate_force_sensor(sensor)
+        if force_offset is None or torque_offset is None:
+            print("Calibration failed. Exiting...")
+            return
+
+        monitoring_thread = threading.Thread(
+            target=monitor_ft_sensor,
+            args=(robot_interface, joint_controller_cfg, args.controller_type, osc_controller_cfg, sensor, force_offset, torque_offset),
+            daemon=True
+        )
+        monitoring_thread.start()
+    else:
+        print("FT sensor monitoring disabled.")
+
+    # Start movement thread using the discrete trajectory
     movement_thread = threading.Thread(target=joint_position_control, args=(robot_interface, joint_controller_cfg), daemon=True)
     movement_thread.start()
 
     # Wait for threads to finish
-    monitoring_thread.join()
+    if args.enable_ft_sensor:
+        monitoring_thread.join()
     movement_thread.join()
-    # video_thread.join()  # Ensure video thread finishes
+    if args.enable_camera:
+        video_thread.join()
 
     # Save and plot data after threads finish
     data_folder = save_data_to_csv()
@@ -557,4 +620,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
