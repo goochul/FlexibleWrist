@@ -30,10 +30,10 @@ initial_z_position = None
 initial_eef_position = None
 max_samples = 4000
 video_duration = 150
-pressing_time = 2
+pressing_time = 4
 rs_camera_index = 6
 Nexigo_camera_index = 0
-force_threshold = 5
+force_threshold = 10
 torque_threshold = 5
 force_max = 20  # Set the force_max threshold here
 eef_title = "Offset End-Effector Positions (X, Y, Z) Over Time with 2x Kp"
@@ -53,7 +53,7 @@ def parse_args():
     # FT sensor toggle: default is disabled here. Use --enable-ft-sensor to enable.
     parser.add_argument("--enable-ft-sensor", dest="enable_ft_sensor", action="store_true", help="Enable force-torque sensor monitoring")
     parser.add_argument("--disable-ft-sensor", dest="enable_ft_sensor", action="store_false", help="Disable force-torque sensor monitoring")
-    parser.set_defaults(enable_ft_sensor=True)
+    parser.set_defaults(enable_ft_sensor=False)
     # Camera toggle: default is disabled here. Use --enable-camera to enable.
     parser.add_argument("--enable-camera", dest="enable_camera", action="store_true", help="Enable camera recording")
     parser.add_argument("--disable-camera", dest="enable_camera", action="store_false", help="Disable camera recording")
@@ -351,6 +351,7 @@ def joint_position_control(robot_interface, controller_cfg):
     # [-0.0801, 0.3781, -0.0501, -2.1852, -0.1416, 4.1600, 0.8416],
     # [-0.0903, 0.3799, -0.0537, -2.1820, -0.1574, 4.1601, 0.8518],
     # [-0.1004, 0.3818, -0.0573, -2.1785, -0.1732, 4.1601, 0.8619],
+    
 
 
         # [-0.0088,  0.3710, -0.0241, -2.1981, -0.0297,  4.1598, 0.7708],
