@@ -28,9 +28,9 @@ global_start_time = None
 force_sensor = None
 initial_z_position = None
 initial_eef_position = None
-max_samples = 2000
+max_samples = 20000
 video_duration = 150
-pressing_time = 90
+pressing_time = 200
 rs_camera_index = 6
 Nexigo_camera_index = 0
 force_threshold = 50
@@ -266,8 +266,11 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         time.sleep(0.01)
 
 def joint_position_control(robot_interface, controller_cfg):
-    reset_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] 
-    des_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] 
+    reset_joint_positions = [0.1737, 0.3923, 0.0417, -2.1585, 0.2565, 4.1599, 0.5885]
+    des_joint_positions = [0.1737, 0.3923, 0.0417, -2.1585, 0.2565, 4.1599, 0.5885]
+
+    # reset_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] 
+    # des_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] 
 
     move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg)
     if stop_movement.is_set():
