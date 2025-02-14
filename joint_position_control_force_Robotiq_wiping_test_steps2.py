@@ -30,7 +30,7 @@ initial_z_position = None
 initial_eef_position = None
 max_samples = 20000
 video_duration = 600
-pressing_time = 0.05 #2/40
+pressing_time = 0.05
 rs_camera_index = 6
 Nexigo_camera_index = 0
 force_threshold = 15
@@ -48,7 +48,7 @@ recording_done = threading.Event()
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--interface-cfg", type=str, default="charmander.yml")
-    parser.add_argument("--controller-cfg", type=str, default="joint-impedance-controller.yml")
+    parser.add_argument("--controller-cfg", type=str, default="joint-position-controller.yml")
     parser.add_argument("--controller-type", type=str, default="OSC_POSE")
     # FT sensor toggle: default is disabled here. Use --enable-ft-sensor to enable.
     parser.add_argument("--enable-ft-sensor", dest="enable_ft_sensor", action="store_true", help="Enable force-torque sensor monitoring")
@@ -71,7 +71,7 @@ def calibrate_force_sensor(sensor, num_samples=100, sleep_time=0.01):
         for _ in range(num_samples):
             force, torque = sensor.get_force_obs()
             readings.append((force, torque))
-            time.sleep(sleep_time)
+            # time.sleep(sleep_time)
 
         # Calculate offsets
         force_offset = np.mean([r[0] for r in readings], axis=0)
@@ -147,7 +147,7 @@ def monitor_ft_sensor(robot_interface, joint_controller_cfg, osc_controller_type
                 return
 
             # Short delay for smoother monitoring
-            time.sleep(0.01)
+            # time.sleep(0.01)
 
     except Exception as e:
         print(f"Error in monitor_ft_sensor: {e}")
@@ -212,19 +212,6 @@ def get_joint_data(robot_interface):
 # Global variable to mark events (used in plotting)
 event_markers = []
 
-def smooth_move_to_position(robot_interface, current_pos, target_pos, controller_cfg, duration=3.0, steps=100):
-    """
-    Interpolates a smooth trajectory between the current joint positions and the target joint positions.
-    The interpolation is done in 'steps' steps over 'duration' seconds.
-    """
-    print("Regenerating a smooth trajectory to avoid sudden movement...")
-    for i in range(1, steps + 1):
-        # Linear interpolation for each joint:
-        interp_pos = current_pos + (target_pos - current_pos) * (i / steps)
-        action = list(interp_pos) + [-1.0]
-        robot_interface.control(controller_type="JOINT_IMPEDANCE", action=action, controller_cfg=controller_cfg)
-        time.sleep(duration / steps)
-
 def move_to_position(robot_interface, target_positions, controller_cfg, event_label=None):
     """
     Moves the robot toward the target joint positions. If the current configuration is far from the target 
@@ -243,12 +230,6 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         current_joint_pos, _ = get_joint_data(robot_interface)
     else:
         current_joint_pos = target_positions  # fallback if no data is available
-
-    # If the difference is large, regenerate a smooth trajectory.
-    # (Threshold here can be tuned – here we check if any joint difference exceeds 0.05 rad.)
-    # if np.any(np.abs(np.array(target_positions) - np.array(current_joint_pos)) > 0.05):
-    #     smooth_move_to_position(robot_interface, np.array(current_joint_pos), np.array(target_positions), controller_cfg, duration=3.0, steps=100)
-    #     return
 
     while True:
         if stop_movement.is_set():
@@ -287,7 +268,7 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
                 print("Position error is small. Breaking loop.")
                 break
 
-        robot_interface.control(controller_type="JOINT_IMPEDANCE", action=action, controller_cfg=controller_cfg)
+        robot_interface.control(controller_type="JOINT_POSITION", action=action, controller_cfg=controller_cfg)
 
         if stop_movement.is_set():
             print("Movement interrupted after command.")
@@ -1109,71 +1090,6 @@ def joint_position_control(robot_interface, controller_cfg):
     [-0.0098, 0.7403, -0.0210, -2.0942, -0.0198, 4.4250, 0.7662],
     [-0.0100, 0.7403, -0.0211, -2.0942, -0.0201, 4.4250, 0.7664],
     [-0.0101, 0.7404, -0.0212, -2.0942, -0.0204, 4.4250, 0.7666],
-
-    # [0.1447, 0.7552, 0.0611, -2.0589, 0.2030, 4.4179, 0.6399],
-    # [0.1447, 0.7552, 0.0611, -2.0589, 0.2030, 4.4179, 0.6399],
-    # [0.1366, 0.7533, 0.0570, -2.0633, 0.1915, 4.4187, 0.6468],
-    # [0.1284, 0.7516, 0.0528, -2.0672, 0.1799, 4.4195, 0.6537],
-    # [0.1203, 0.7500, 0.0486, -2.0709, 0.1683, 4.4202, 0.6605],
-    # [0.1122, 0.7486, 0.0444, -2.0744, 0.1566, 4.4208, 0.6673],
-    # [0.1040, 0.7472, 0.0401, -2.0775, 0.1449, 4.4214, 0.6740],
-    # [0.0959, 0.7460, 0.0358, -2.0804, 0.1332, 4.4220, 0.6808],
-    # [0.0877, 0.7448, 0.0315, -2.0831, 0.1215, 4.4225, 0.6875],
-    # [0.0796, 0.7438, 0.0272, -2.0854, 0.1097, 4.4230, 0.6941],
-    # [0.0714, 0.7429, 0.0228, -2.0876, 0.0980, 4.4234, 0.7008],
-    # [0.0633, 0.7422, 0.0184, -2.0894, 0.0862, 4.4238, 0.7074],
-    # [0.0551, 0.7415, 0.0141, -2.0910, 0.0744, 4.4241, 0.7140],
-    # [0.0470, 0.7410, 0.0097, -2.0923, 0.0625, 4.4244, 0.7206],
-    # [0.0388, 0.7405, 0.0053, -2.0934, 0.0507, 4.4246, 0.7272],
-    # [0.0307, 0.7402, 0.0009, -2.0942, 0.0389, 4.4248, 0.7338],
-    # [0.0225, 0.7400, -0.0036, -2.0948, 0.0270, 4.4250, 0.7403],
-    # [0.0143, 0.7399, -0.0080, -2.0950, 0.0152, 4.4250, 0.7469],
-    # [0.0062, 0.7399, -0.0124, -2.0951, 0.0033, 4.4251, 0.7534],
-    # [-0.0020, 0.7400, -0.0168, -2.0948, -0.0085, 4.4251, 0.7600],
-    # [-0.0101, 0.7403, -0.0212, -2.0943, -0.0204, 4.4250, 0.7666],
-
-
-    # [0.1447, 0.7552, 0.0611, -2.0589, 0.2030, 4.4179, 0.6399],
-    # [0.1447, 0.7552, 0.0611, -2.0589, 0.2030, 4.4179, 0.6399],
-    # [0.1368, 0.7534, 0.0571, -2.0631, 0.1918, 4.4187, 0.6466],
-    # [0.1289, 0.7517, 0.0530, -2.0670, 0.1805, 4.4194, 0.6533],
-    # [0.1209, 0.7501, 0.0489, -2.0706, 0.1692, 4.4201, 0.6600],
-    # [0.1130, 0.7487, 0.0448, -2.0740, 0.1578, 4.4207, 0.6666],
-    # [0.1051, 0.7474, 0.0406, -2.0771, 0.1464, 4.4214, 0.6732],
-    # [0.0971, 0.7462, 0.0365, -2.0800, 0.1350, 4.4219, 0.6797],
-    # [0.0892, 0.7450, 0.0323, -2.0826, 0.1236, 4.4224, 0.6863],
-    # [0.0813, 0.7440, 0.0281, -2.0850, 0.1122, 4.4229, 0.6928],
-    # [0.0733, 0.7431, 0.0238, -2.0871, 0.1007, 4.4233, 0.6992],
-    # [0.0654, 0.7424, 0.0196, -2.0890, 0.0892, 4.4237, 0.7057],
-    # [0.0574, 0.7417, 0.0153, -2.0906, 0.0777, 4.4240, 0.7122],
-    # [0.0495, 0.7411, 0.0110, -2.0919, 0.0662, 4.4243, 0.7186],
-    # [0.0415, 0.7407, 0.0067, -2.0931, 0.0547, 4.4246, 0.7250],
-    # [0.0336, 0.7403, 0.0024, -2.0939, 0.0431, 4.4248, 0.7314],
-    # [0.0256, 0.7400, -0.0019, -2.0946, 0.0316, 4.4249, 0.7378],
-    # [0.0177, 0.7399, -0.0062, -2.0949, 0.0200, 4.4250, 0.7442],
-    # [0.0097, 0.7399, -0.0105, -2.0951, 0.0085, 4.4251, 0.7506],
-    # [0.0018, 0.7400, -0.0148, -2.0950, -0.0031, 4.4251, 0.7570],
-    # [-0.0062, 0.7401, -0.0191, -2.0946, -0.0146, 4.4250, 0.7634],
-    # [-0.0141, 0.7404, -0.0234, -2.0940, -0.0262, 4.4250, 0.7698],
-    # [-0.0221, 0.7408, -0.0277, -2.0931, -0.0377, 4.4248, 0.7762],
-    # [-0.0300, 0.7413, -0.0319, -2.0920, -0.0492, 4.4247, 0.7826],
-    # [-0.0380, 0.7419, -0.0362, -2.0906, -0.0607, 4.4244, 0.7890],
-    # [-0.0459, 0.7427, -0.0405, -2.0890, -0.0722, 4.4242, 0.7954],
-    # [-0.0539, 0.7435, -0.0447, -2.0872, -0.0837, 4.4238, 0.8019],
-    # [-0.0619, 0.7444, -0.0490, -2.0851, -0.0951, 4.4235, 0.8083],
-    # [-0.0698, 0.7455, -0.0532, -2.0827, -0.1066, 4.4231, 0.8148],
-    # [-0.0778, 0.7466, -0.0574, -2.0801, -0.1180, 4.4226, 0.8213],
-    # [-0.0857, 0.7479, -0.0615, -2.0773, -0.1294, 4.4221, 0.8279],
-    # [-0.0937, 0.7493, -0.0657, -2.0742, -0.1407, 4.4216, 0.8344],
-    # [-0.1016, 0.7507, -0.0698, -2.0708, -0.1521, 4.4210, 0.8410],
-    # [-0.1096, 0.7523, -0.0739, -2.0672, -0.1633, 4.4203, 0.8476],
-    # [-0.1175, 0.7540, -0.0779, -2.0634, -0.1746, 4.4197, 0.8543],
-    # [-0.1255, 0.7558, -0.0820, -2.0593, -0.1858, 4.4189, 0.8610],
-    # [-0.1334, 0.7577, -0.0860, -2.0550, -0.1970, 4.4182, 0.8677],
-    # [-0.1414, 0.7598, -0.0899, -2.0504, -0.2082, 4.4173, 0.8745],
-    # [-0.1493, 0.7619, -0.0938, -2.0455, -0.2193, 4.4165, 0.8813],
-    # [-0.1573, 0.7641, -0.0977, -2.0404, -0.2303, 4.4156, 0.8881],
-    # [-0.1652, 0.7665, -0.1016, -2.0350, -0.2413, 4.4146, 0.8950],
     ]
 
     # For the unloading phase, simply reverse the loading positions.
@@ -1184,7 +1100,7 @@ def joint_position_control(robot_interface, controller_cfg):
     move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg)
     if stop_movement.is_set():
         return
-    time.sleep(0.5)
+    # time.sleep(0.5)
 
     # 2. Loading Phase (event label "1"): move through each discrete position.
     for pos in loading_positions:
@@ -1215,7 +1131,7 @@ def osc_move(robot_interface, controller_type, controller_cfg, num_steps, time_i
         print(f"Step {step}, Current z-axis position: {z_position}")
         action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0] + [-1.0])
         robot_interface.control(controller_type=controller_type, action=action, controller_cfg=controller_cfg)
-        time.sleep(time_interval)
+        # time.sleep(time_interval)
 
 # Save Data to CSV
 def save_data_to_csv():

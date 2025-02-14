@@ -139,7 +139,7 @@ def main():
     #                                       n_steps)
 
     # Move +Y by 0.1 m in 10 steps
-    n_steps = 20
+    n_steps = 20*40
     desired_positions = np.tile(current_position, (n_steps, 1))
     desired_positions[:, 1] = np.linspace(current_position[1], 
                                           current_position[1] - 0.1, 
@@ -249,11 +249,16 @@ def main():
     # for i, jp in enumerate(joint_trajectory):
     #     print(f"{jp}")
 
+    # print("Joint positions per step (radians):")
+    # for i, jp in enumerate(joint_trajectory):
+    #     # Format each joint angle with 4 decimal places, for example
+    #     jp_str = ", ".join([f"{val:.4f}" for val in jp])
+    #     print(f"[{jp_str}]")
+
     print("Joint positions per step (radians):")
     for i, jp in enumerate(joint_trajectory):
-        # Format each joint angle with 4 decimal places, for example
         jp_str = ", ".join([f"{val:.4f}" for val in jp])
-        print(f"[{jp_str}]")
+        print(f"[{jp_str}],")
 
 if __name__ == "__main__":
     main()
