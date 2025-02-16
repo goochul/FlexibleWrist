@@ -230,7 +230,7 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
             joint_pos, joint_vel = get_joint_data(robot_interface)
             joint_positions.append(joint_pos)
             joint_velocities.append(joint_vel)
-
+            print(joint_pos)
             # If we haven't stored the initial EEF position yet, store it now
             if initial_eef_position is None:
                 initial_eef_position = current_ee_position.copy()
@@ -262,12 +262,12 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         if stop_movement.is_set():
             print("Movement interrupted after command.")
             break
-
+        # print(get_joint_data(robot_interface))
         time.sleep(0.01)
 
 def joint_position_control(robot_interface, controller_cfg):
     reset_joint_positions = [0.1447, 0.7552, 0.0611, -2.0589, 0.2030, 4.4179, 0.6399]
-    des_joint_positions = [0.1447, 0.7552, 0.0611, -2.0589, 0.2030, 4.4179, 0.6399]
+    des_joint_positions = [-0.0101, 0.7404, -0.0212, -2.0942, -0.0204, 4.4250, 0.7666]
 
     # reset_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] 
     # des_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] 

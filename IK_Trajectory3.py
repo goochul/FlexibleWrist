@@ -139,7 +139,7 @@ def main():
     #                                       n_steps)
 
     # Move +Y by 0.1 m in 10 steps
-    n_steps = 20*40
+    n_steps = 20*10
     desired_positions = np.tile(current_position, (n_steps, 1))
     desired_positions[:, 1] = np.linspace(current_position[1], 
                                           current_position[1] - 0.1, 
