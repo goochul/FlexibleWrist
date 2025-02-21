@@ -55,6 +55,9 @@ def process_dataset(file_path):
     torque_data['Filtered Tx'] = low_pass_filter(torque_data['Tx'], cutoff_frequency, sampling_frequency)
     torque_data['Filtered Ty'] = low_pass_filter(torque_data['Ty'], cutoff_frequency, sampling_frequency)
     torque_data['Filtered Tz'] = low_pass_filter(torque_data['Tz'], cutoff_frequency, sampling_frequency)
+
+    torque_data['Rotated Tx'] = cos_angle * torque_data['Filtered Tx'] - sin_angle * torque_data['Filtered Ty']
+    torque_data['Rotated Ty'] = sin_angle * torque_data['Filtered Tx'] + cos_angle * torque_data['Filtered Ty']
     
     # Merge force_data and y_position_data on Timestamp
     merged_data = pd.merge_asof(
