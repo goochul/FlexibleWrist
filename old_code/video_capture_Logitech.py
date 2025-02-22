@@ -3,7 +3,7 @@ import time
 import os
 
 # Specify the camera index for Logitech (update this based on your system, e.g., 6 or 7)
-camera_index = 0  # Replace with the correct index for your Logitech camera
+camera_index = 4  # Replace with the correct index for your Logitech camera
 
 # Set up the video capture for Logitech camera
 cap = cv2.VideoCapture(camera_index)
