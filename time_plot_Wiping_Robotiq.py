@@ -8,7 +8,10 @@ import os
 # List of file paths
 file_paths = [
     # Path('data/20250217/021118/')
-    Path('data/20250221/195232/')
+    # Path('data/20250221/195232/')
+    Path('data/20250222/232016/'),
+    Path('data/20250222/232359/'),
+    Path('data/20250222/232840/'),
 ]
 
 # Low-pass filter function
@@ -41,7 +44,7 @@ def process_dataset(file_path):
     force_data['Filtered Fy'] = low_pass_filter(force_data['Fy'], cutoff_frequency, sampling_frequency)
     force_data['Filtered Fz'] = low_pass_filter(force_data['Fz'], cutoff_frequency, sampling_frequency)
     
-    # Rotate Fx and Fy by 45 degrees about Z (i.e. 45° in the opposite direction than 45°)
+    # Rotate Fx and Fy by 45 degrees about Z (i.e., 45° in the opposite direction)
     angle = np.deg2rad(45)
     cos_angle = np.cos(angle)
     sin_angle = np.sin(angle)
@@ -76,7 +79,7 @@ def process_dataset(file_path):
         on="Timestamp", direction="nearest"
     )
     
-    # (For Y Position, we simply keep the same column; here we use it as the offset)
+    # Use the same Y Position column (as offset)
     merged_data['Y Position'] = merged_data['Y Position']
     
     return merged_data
@@ -95,8 +98,7 @@ aligned_fz = [df.set_index('Timestamp')['Filtered Fz'].reindex(time).interpolate
 
 aligned_y = [df.set_index('Timestamp')['Y Position'].reindex(time).interpolate() for df in processed_datasets]
 aligned_torque = [df.set_index('Timestamp')['Filtered Torque Magnitude'].reindex(time).interpolate() for df in processed_datasets]
-aligned_mx = [df.set_index('Timestamp')['Filtered Tz'].reindex(time).interpolate() for df in processed_datasets]  # Keeping Filtered Tz as is
-# Note: Rotated Tx and Ty will be reindexed separately below.
+aligned_mx = [df.set_index('Timestamp')['Filtered Tz'].reindex(time).interpolate() for df in processed_datasets]
 
 # ----- Reindex rotated torque data -----
 aligned_rotated_tx = [df.set_index('Timestamp')['Rotated Tx'].reindex(time).interpolate() for df in processed_datasets]
@@ -119,6 +121,7 @@ mean_torque = pd.concat(aligned_torque, axis=1).mean(axis=1)
 std_torque = pd.concat(aligned_torque, axis=1).std(axis=1)
 mean_rotated_tx = pd.concat(aligned_rotated_tx, axis=1).mean(axis=1)
 mean_rotated_ty = pd.concat(aligned_rotated_ty, axis=1).mean(axis=1)
+mean_mx = pd.concat(aligned_mx, axis=1).mean(axis=1)
 
 # Compute means and standard deviations (raw)
 mean_raw_force = pd.concat(aligned_raw_force, axis=1).mean(axis=1)
@@ -131,7 +134,7 @@ std_raw_torque = pd.concat(aligned_raw_torque, axis=1).std(axis=1)
 # =======================================================
 # Figure 1: Raw Force and Raw Y Position
 # =======================================================
-fig1, (ax1, ax3) = plt.subplots(2, 1, figsize=(12, 16))  # Two rows in Figure 1
+fig1, (ax1, ax3) = plt.subplots(2, 1, figsize=(12, 12))  # Two rows in Figure 1
 
 # --- Top subplot: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position ---
 ax1.plot(mean_force.index.to_numpy(), mean_force.to_numpy(), label="Filtered Force Mag", color='blue')
@@ -193,9 +196,9 @@ ax3.legend(lines3 + lines3b, labels3 + labels3b, loc="upper right")
 # =======================================================
 # Figure 2: Torque and Y Position (Raw Torque Plots)
 # =======================================================
-fig2, (ax5, ax7) = plt.subplots(2, 1, figsize=(12, 16))  # Two rows in Figure 2
+fig2, (ax5, ax7) = plt.subplots(2, 1, figsize=(12, 12))  # Two rows in Figure 2
 
-# --- Top subplot: Filtered Torque (with Rotated Tx, Rotated Ty, Mz) and Y Position ---
+# --- Top subplot: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position ---
 ax5.plot(mean_torque.index.to_numpy(), mean_torque.to_numpy(), label="Filtered Torque Mag", color="purple")
 ax5.fill_between(mean_torque.index.to_numpy(),
                  (mean_torque - std_torque).to_numpy(),
@@ -204,7 +207,6 @@ ax5.fill_between(mean_torque.index.to_numpy(),
 # Plot rotated Tx and Ty instead of filtered Tx and Ty
 ax5.plot(mean_rotated_tx.index.to_numpy(), mean_rotated_tx.to_numpy(), label="Rotated Tx", color="olive", linestyle="--")
 ax5.plot(mean_rotated_ty.index.to_numpy(), mean_rotated_ty.to_numpy(), label="Rotated Ty", color="navy", linestyle="--")
-mean_mx = pd.concat(aligned_mx, axis=1).mean(axis=1)
 ax5.plot(mean_mx.index.to_numpy(), mean_mx.to_numpy(), label="Filtered Tz", color="teal", linestyle="--")
 ax5.set_xlabel("Time (s)")
 ax5.set_ylabel("Torque (Nm)", color="purple")
@@ -252,7 +254,7 @@ ax7.set_title("Figure 2: Raw Torque and Raw Y Position")
 ax7.set_ylim([-4, 4])
 lines7, labels7 = ax7.get_legend_handles_labels()
 lines7b, labels7b = ax7b.get_legend_handles_labels()
-ax7.legend(lines7 + lines7b, labels7 + labels7b, loc='upper right')
+ax7.legend(lines7 + lines7b, labels7 + labels7b, loc="upper right")
 
 # Show both figures (they will appear in separate windows)
 plt.show()
