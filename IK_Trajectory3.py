@@ -135,11 +135,11 @@ def main():
     # n_steps = 5
     # desired_positions = np.tile(current_position, (n_steps, 1))
     # desired_positions[:, 0] = np.linspace(current_position[0], 
-    #                                       current_position[0] -0.2, 
+    #                                       current_position[0] -0.04, 
     #                                       n_steps)
 
     # # Move +Y by 0.1 m in 10 steps
-    n_steps = 10
+    n_steps = 100
     desired_positions = np.tile(current_position, (n_steps, 1))
     desired_positions[:, 1] = np.linspace(current_position[1], 
                                           current_position[1] - 0.45, 
