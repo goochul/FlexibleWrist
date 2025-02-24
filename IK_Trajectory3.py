@@ -121,7 +121,7 @@ def main():
     ])
 
     # Initial joint values (theta) in radians (7 joints only)
-    initial_joint_positions = np.array( [0.1446, 0.7525, 0.0612, -2.0602, 0.2031, 4.4167, 0.6396])
+    initial_joint_positions = np.array([0.1446, 0.7525, 0.0612, -2.0602, 0.2031, 4.4167, 0.6396])
 
     # Forward Kinematics for initial pose
     T = forward_kinematics(initial_joint_positions, dh_params[:7, :])
@@ -131,15 +131,15 @@ def main():
     current_orientation = T[0:3, 0:3]
     q_current = rotm2quat(current_orientation)
 
-    # # # Move +x by 0.1 m in 10 steps
+    # # Move +x by 0.1 m in 10 steps
     # n_steps = 5
     # desired_positions = np.tile(current_position, (n_steps, 1))
     # desired_positions[:, 0] = np.linspace(current_position[0], 
-    #                                       current_position[0] -0.04, 
+    #                                       current_position[0] + 0.04, 
     #                                       n_steps)
 
     # # Move +Y by 0.1 m in 10 steps
-    n_steps = 100
+    n_steps = 200
     desired_positions = np.tile(current_position, (n_steps, 1))
     desired_positions[:, 1] = np.linspace(current_position[1], 
                                           current_position[1] - 0.45, 
@@ -149,7 +149,7 @@ def main():
     # n_steps = 5
     # desired_positions = np.tile(current_position, (n_steps, 1))
     # desired_positions[:, 2] = np.linspace(current_position[2], 
-    #                                       current_position[2] - 0.002, 
+    #                                       current_position[2] + 0.05, 
     #                                       n_steps)
 
     # Desired orientation remains the same

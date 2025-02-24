@@ -9,9 +9,18 @@ import os
 file_paths = [
     # Path('data/20250217/021118/')
     # Path('data/20250221/195232/')
-    Path('data/20250222/232016/'),
-    Path('data/20250222/232359/'),
-    Path('data/20250222/232840/'),
+
+
+    # Path('data/20250222/232016/'),
+    # Path('data/20250222/232359/'),
+    # Path('data/20250222/232840/'),
+
+    # Path('data/20250223/151503/'),
+    # Path('data/20250223/152241/'),
+    # Path('data/20250223/153138/'),
+
+    Path('data/20250223/204632/'),
+    Path('data/20250223/205123/'),
 ]
 
 # Low-pass filter function
