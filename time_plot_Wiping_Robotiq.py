@@ -21,11 +21,30 @@ file_paths = [
 
     # Path('data/20250223/204632/'),
     # Path('data/20250223/205123/'),
+<<<<<<< HEAD
     # Path('data/20250223/205921/'),
 
     Path('data/20250223/210908/'),
 
     
+=======
+
+
+    # Path('data/20250228/192957/'),
+    # Path('data/20250228/193106/'),
+    # Path('data/20250228/193308/'),
+
+    # Path('data/20250301/000111/'),
+    # Path('data/20250301/000521/'),
+    # Path('data/20250301/000802/'),
+
+    Path('data/20250301/005049/'),
+    Path('data/20250301/005436/'),
+    Path('data/20250301/005724/'),
+    
+    
+
+>>>>>>> refs/remotes/origin/main
 ]
 
 # Low-pass filter function
@@ -64,6 +83,10 @@ def process_dataset(file_path):
     sin_angle = np.sin(angle)
     force_data['Rotated Fx'] = cos_angle * force_data['Filtered Fx'] - sin_angle * force_data['Filtered Fy']
     force_data['Rotated Fy'] = sin_angle * force_data['Filtered Fx'] + cos_angle * force_data['Filtered Fy']
+
+    force_data['Rotated_Raw_Fx'] = cos_angle * force_data['Fx'] - sin_angle * force_data['Fy']
+    force_data['Rotated_Raw_Fy'] = sin_angle * force_data['Fx'] + cos_angle * force_data['Fy']
+    force_data['Rotated_Raw_Fz'] = force_data['Fz']
     
     # Process torque data: Filter torque magnitude and individual moment components
     torque_data['Filtered Torque Magnitude'] = low_pass_filter(
@@ -108,6 +131,9 @@ time = processed_datasets[0]['Timestamp'].sort_values().drop_duplicates()
 aligned_force = [df.set_index('Timestamp')['Filtered Force Magnitude'].reindex(time).interpolate() for df in processed_datasets]
 aligned_rotated_fx = [df.set_index('Timestamp')['Rotated Fx'].reindex(time).interpolate() for df in processed_datasets]
 aligned_rotated_fy = [df.set_index('Timestamp')['Rotated Fy'].reindex(time).interpolate() for df in processed_datasets]
+aligned_rotated_raw_fx = [df.set_index('Timestamp')['Rotated_Raw_Fx'].reindex(time).interpolate() for df in processed_datasets]
+aligned_rotated_raw_fy = [df.set_index('Timestamp')['Rotated_Raw_Fy'].reindex(time).interpolate() for df in processed_datasets]
+aligned_rotated_raw_fz = [df.set_index('Timestamp')['Rotated_Raw_Fz'].reindex(time).interpolate() for df in processed_datasets]
 aligned_fz = [df.set_index('Timestamp')['Filtered Fz'].reindex(time).interpolate() for df in processed_datasets]
 
 aligned_y = [df.set_index('Timestamp')['Y Position'].reindex(time).interpolate() for df in processed_datasets]
@@ -126,6 +152,9 @@ aligned_raw_torque = [df.set_index('Timestamp')['Torque Magnitude'].reindex(time
 # Compute means and standard deviations (filtered)
 mean_force = pd.concat(aligned_force, axis=1).mean(axis=1)
 std_force = pd.concat(aligned_force, axis=1).std(axis=1)
+rotated_raw_fx = pd.concat(aligned_rotated_raw_fx, axis=1).mean(axis=1)
+rotated_raw_fy = pd.concat(aligned_rotated_raw_fy, axis=1).mean(axis=1)
+rotated_raw_fz = pd.concat(aligned_rotated_raw_fz, axis=1).mean(axis=1)
 mean_rotated_fx = pd.concat(aligned_rotated_fx, axis=1).mean(axis=1)
 mean_rotated_fy = pd.concat(aligned_rotated_fy, axis=1).mean(axis=1)
 mean_fz = pd.concat(aligned_fz, axis=1).mean(axis=1)
@@ -204,12 +233,19 @@ ax3.plot(mean_raw_force.index.to_numpy(), mean_raw_force.to_numpy(), label="Raw 
 ax3.fill_between(mean_raw_force.index.to_numpy(), 
                  mean_raw_force.to_numpy() - std_raw_force.to_numpy(), 
                  mean_raw_force.to_numpy() + std_raw_force.to_numpy(),
+<<<<<<< HEAD
                  color="green", alpha=0.3, label="Raw Force Mag Std Dev")
 # Add raw Fx, Fy, Fz lines
 # ax3.plot(mean_raw_fx.index.to_numpy(), mean_raw_fx.to_numpy(), label="Raw Fx", color="blue", linestyle="--")
 # ax3.plot(mean_raw_fy.index.to_numpy(), mean_raw_fy.to_numpy(), label="Raw Fy", color="orange", linestyle="--")
 # ax3.plot(mean_raw_fz.index.to_numpy(), mean_raw_fz.to_numpy(), label="Raw Fz", color="purple", linestyle="--")
 
+=======
+                 color="green", alpha=0.3, label="Raw Force Std Dev")
+ax3.plot(rotated_raw_fx.index.to_numpy(), rotated_raw_fx.to_numpy(), label="Rotated_Raw_Fx", color='cyan', linestyle='--')
+ax3.plot(rotated_raw_fy.index.to_numpy(), rotated_raw_fy.to_numpy(), label="Rotated_Raw_Fy", color='magenta', linestyle='--')
+ax3.plot(rotated_raw_fz.index.to_numpy(), rotated_raw_fz.to_numpy(), label="Rotated_Raw_Fz", color='brown', linestyle='--')
+>>>>>>> refs/remotes/origin/main
 ax3.set_xlabel("Time (s)")
 ax3.set_ylabel("Force (N)", color="green")
 ax3.tick_params(axis="y", labelcolor="green")

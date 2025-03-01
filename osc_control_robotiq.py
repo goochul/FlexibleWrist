@@ -60,14 +60,18 @@ def osc_move(robot_interface, controller_type, controller_cfg, target_pose, num_
         if np.dot(target_quat, current_quat) < 0.0:
             current_quat = -current_quat
         quat_diff = transform_utils.quat_distance(target_quat, current_quat)
+        current_axis_angle = transform_utils.quat2axisangle(current_quat)
         # Normally, one would compute the rotational error as:
-        # axis_angle_diff = transform_utils.quat2axisangle(quat_diff)
+        axis_angle_diff = transform_utils.quat2axisangle(quat_diff)
         # However, we override the rotational command to zero.
-        action_axis_angle = np.zeros(3)
+        # action_axis_angle = np.zeros(3)
         
         # Compute translational command:
-        action_pos = (target_pos - current_pos).flatten() * 10
+        action_pos = (target_pos - current_pos).flatten() * 15
         action_pos = np.clip(action_pos, -2.0, 2.0)
+
+        action_axis_angle = axis_angle_diff.flatten() * 5
+        action_axis_angle = np.clip(action_axis_angle, -0.6, 0.6)
 
         # Construct the full action:
         action = action_pos.tolist() + action_axis_angle.tolist() + [-1.0]
@@ -168,7 +172,7 @@ def main():
         logger.warn("Robot state not received")
         time.sleep(0.5)
 
-    reset_joint_positions = [-0.0088, 0.3710, -0.0241, -2.1981, -0.0297, 4.1598, 0.7708]
+    reset_joint_positions = [0.2221, 0.7754, 0.0982, -2.0070, 0.3110, 4.4065, 0.5720]
     reset_joints_to(robot_interface, reset_joint_positions)
 
     current_ee_pose = robot_interface.last_eef_pose
@@ -178,16 +182,16 @@ def main():
     print("Start current_euler_angle intr: ", current_euler_angle_degrees_intr)
     print("Start current_euler_angle extr: ", current_euler_angle_degrees_extr)
     
-    # move_to_target_pose(
-    #     robot_interface,
-    #     controller_type,
-    #     controller_cfg,
-    #     target_delta_pose=[0.0, -0.2, 0.0, 0.0, 0.0, 0.0],
-    #     num_steps=300,
-    #     num_additional_steps=30,
-    #     interpolation_method="linear",
-    #     type="euler"
-    # )
+    move_to_target_pose(
+        robot_interface,
+        controller_type,
+        controller_cfg,
+        target_delta_pose=[0.0, -0.4, 0.0, 0.0, 0.0, 0.0],
+        num_steps=50,
+        num_additional_steps=50,
+        interpolation_method="linear",
+        type="euler"
+    )
 
     final_ee_pose = robot_interface.last_eef_pose
     final_rot = final_ee_pose[:3, :3]
@@ -195,6 +199,8 @@ def main():
     final_euler_angle_degrees_extr = R.from_matrix(final_rot).as_euler('xyz', degrees=True)
     print("final_euler_angle intr: ", final_euler_angle_degrees_intr)
     print("final_euler_angle extr: ", final_euler_angle_degrees_extr)
+
+    reset_joints_to(robot_interface, reset_joint_positions)
 
     robot_interface.close()
 

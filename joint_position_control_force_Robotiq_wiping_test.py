@@ -35,7 +35,7 @@ rs_camera_index = 6
 Nexigo_camera_index = 0
 force_threshold = 50
 torque_threshold = 5
-force_max = 20  # Set the force_max threshold here
+force_max = 15  # Set the force_max threshold here
 eef_title = "Offset End-Effector Positions (X, Y, Z) Over Time with 2x Kp"
 
 # Event signals
@@ -266,8 +266,8 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         time.sleep(0.01)
 
 def joint_position_control(robot_interface, controller_cfg):
-    reset_joint_positions = [0.0991, 0.7438, 0.0377, -2.0804, 0.1381, 4.4206, 0.6777]
-    des_joint_positions = [0.0991, 0.7438, 0.0377, -2.0804, 0.1381, 4.4206, 0.6777]
+    reset_joint_positions = [0.3248, 0.8666, 0.1344, -1.8463, 0.4390, 4.3773, -0.2628]
+    des_joint_positions = [0.3248, 0.8666, 0.1344, -1.8463, 0.4390, 4.3773, -0.2628]
     # values for the flexible wrist + robotiq
     # [0.1446, 0.7525, 0.0612, -2.0602, 0.2031, 4.4167, 0.6396]
     # values for the non flexible wrist + robotiq
@@ -516,9 +516,9 @@ def main():
     if args.enable_camera:
         video_thread.join()
 
-    # Save and plot data after threads finish
-    data_folder = save_data_to_csv()
-    plot_merged_data(data_folder)
+    # # Save and plot data after threads finish
+    # data_folder = save_data_to_csv()
+    # plot_merged_data(data_folder)
 
     print("Process complete.")
 
