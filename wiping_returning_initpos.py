@@ -253,9 +253,9 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
 
 def joint_position_control(robot_interface, controller_cfg):
     # with flexible wrist
-    move_up_joint_positions = [-0.5552, 0.8400, -0.2442, -1.4781, -0.8120, 4.2228, 1.4599]
-    des_joint_positions = [0.1445, 0.5029, 0.0698, -2.1453, 0.2351, 4.2564, 0.6024]
-    reset_joint_positions = [0.0991, 0.7438, 0.0377, -2.0804, 0.1381, 4.4206, 0.6777]
+    move_up_joint_positions = [-0.2396, 0.6690, -0.1464, -2.0208, -0.3729, 4.3338, 0.9931]
+    des_joint_positions = [0.2964, 0.6880, 0.1408, -1.9778, 0.4419, 4.3279, 0.4650]
+    reset_joint_positions = [0.3526, 0.8952, 0.1425, -1.8025, 0.4706, 4.3752, -0.2883]
 
     # # wihtout flexible wrist
     # move_up_joint_positions = [-0.5762, 1.0309, -0.1781, -1.2546, -0.7909, 4.1587, 0.6511]

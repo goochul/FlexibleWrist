@@ -190,15 +190,7 @@ def main():
         logger.warn("Robot state not received")
         time.sleep(0.5)
 
-    reset_joint_positions = [
-        0.09162008114028396,
-        -0.19826458111314524,
-        -0.01990020486871322,
-        -2.4732269941140346,
-        -0.01307073642274261,
-        2.30396583422025,
-        0.8480939705504309,
-    ]
+    reset_joint_positions = [0.2221, 0.7754, 0.0982, -2.0070, 0.3110, 4.4065, 0.5720]
 
     reset_joints_to(robot_interface, reset_joint_positions)
 
@@ -213,7 +205,7 @@ def main():
         robot_interface,
         controller_type,
         controller_cfg,
-        target_delta_pose=[0.1, 0.0, 0.0, 0.0, 0.0, 0.0],
+        target_delta_pose=[0.0, -0.2, 0.0, 0.0, 0.0, 0.0],
         num_steps=80,
         num_additional_steps=40,
         interpolation_method="linear",
