@@ -7,23 +7,9 @@ import os
 
 # List of file paths
 file_paths = [
-    # Path('data/20250217/021118/')
-    # Path('data/20250221/195232/')
-
-
-    # Path('data/20250222/232016/'),
-    # Path('data/20250222/232359/'),
-    # Path('data/20250222/232840/'),
-
-    # Path('data/20250223/151503/'),
-    # Path('data/20250223/152241/'),
-    # Path('data/20250223/153138/'),
-
-    # Path('data/20250223/204632/'),
-    # Path('data/20250223/205123/'),
-    # Path('data/20250223/205921/'),
-
-    Path('data/20250223/210908/'),
+    Path('data/20250223/200019/'),
+    Path('data/20250223/200259/'),
+    Path('data/20250223/200524/'),
 
     
 ]
@@ -59,7 +45,7 @@ def process_dataset(file_path):
     force_data['Filtered Fz'] = low_pass_filter(force_data['Fz'], cutoff_frequency, sampling_frequency)
     
     # Rotate Fx and Fy by 45 degrees about Z (i.e., 45° in the opposite direction)
-    angle = np.deg2rad(45)
+    angle = np.deg2rad(0)
     cos_angle = np.cos(angle)
     sin_angle = np.sin(angle)
     force_data['Rotated Fx'] = cos_angle * force_data['Filtered Fx'] - sin_angle * force_data['Filtered Fy']
@@ -194,7 +180,7 @@ ax1b.set_ylabel("Y Position (m)", color='red')
 ax1b.tick_params(axis='y', labelcolor='red')
 ax1b.set_ylim([-0.5, 0.5])
 ax1b.axhline(0, color='gray', linestyle='--', linewidth=1)
-ax1.set_title("Figure 1: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position - Flexible Wrist + 65mm peak height")
+ax1.set_title("Figure 1: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position - Non-Flexible Wrist + 25mm peak Height")
 lines1, labels1 = ax1.get_legend_handles_labels()
 lines1b, labels1b = ax1b.get_legend_handles_labels()
 ax1.legend(lines1 + lines1b, labels1 + labels1b, loc='upper right')
@@ -262,7 +248,7 @@ ax5b.set_ylabel("Y Position (m)", color='red')
 ax5b.tick_params(axis='y', labelcolor='red')
 ax5b.set_ylim([-0.5, 0.5])
 ax5b.axhline(0, color='gray', linestyle='--', linewidth=1)
-ax5.set_title("Figure 2: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position - Flexible Wrist + 65mm peak height")
+ax5.set_title("Figure 2: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position - Non-Flexible Wrist + 25mm peak Height")
 ax5.set_ylim([-4, 4])
 lines5, labels5 = ax5.get_legend_handles_labels()
 lines5b, labels5b = ax5b.get_legend_handles_labels()
@@ -297,42 +283,3 @@ ax7.legend(lines7 + lines7b, labels7 + labels7b, loc="upper right")
 
 # Show both figures (they will appear in separate windows)
 plt.show()
-
-
-# # ----- Reindex raw X, Y, Z displacement data -----
-# aligned_raw_x = [df.set_index('Timestamp')['X_Offset'].reindex(time).interpolate() for df in processed_datasets]
-# aligned_raw_y_disp = [df.set_index('Timestamp')['Y_Offset'].reindex(time).interpolate() for df in processed_datasets]
-# aligned_raw_z = [df.set_index('Timestamp')['Z_Offset'].reindex(time).interpolate() for df in processed_datasets]
-
-# # Compute means and standard deviations for raw X, Y, and Z displacements
-# mean_raw_x = pd.concat(aligned_raw_x, axis=1).mean(axis=1)
-# std_raw_x  = pd.concat(aligned_raw_x, axis=1).std(axis=1)
-# mean_raw_y_disp = pd.concat(aligned_raw_y_disp, axis=1).mean(axis=1)
-# std_raw_y_disp  = pd.concat(aligned_raw_y_disp, axis=1).std(axis=1)
-# mean_raw_z = pd.concat(aligned_raw_z, axis=1).mean(axis=1)
-# std_raw_z  = pd.concat(aligned_raw_z, axis=1).std(axis=1)
-
-# # ----- Plot X, Y, and Z displacement vs Time -----
-# fig3, ax = plt.subplots(figsize=(12, 6))
-# ax.plot(mean_raw_x.index.to_numpy(), mean_raw_x.to_numpy(), label="X Displacement", color="blue")
-# ax.fill_between(mean_raw_x.index.to_numpy(), 
-#                 (mean_raw_x - std_raw_x).to_numpy(), 
-#                 (mean_raw_x + std_raw_x).to_numpy(), 
-#                 color="blue", alpha=0.3)
-# ax.plot(mean_raw_y_disp.index.to_numpy(), mean_raw_y_disp.to_numpy(), label="Y Displacement", color="red")
-# ax.fill_between(mean_raw_y_disp.index.to_numpy(), 
-#                 (mean_raw_y_disp - std_raw_y_disp).to_numpy(), 
-#                 (mean_raw_y_disp + std_raw_y_disp).to_numpy(), 
-#                 color="red", alpha=0.3)
-# ax.plot(mean_raw_z.index.to_numpy(), mean_raw_z.to_numpy(), label="Z Displacement", color="green")
-# ax.fill_between(mean_raw_z.index.to_numpy(), 
-#                 (mean_raw_z - std_raw_z).to_numpy(), 
-#                 (mean_raw_z + std_raw_z).to_numpy(), 
-#                 color="green", alpha=0.3)
-
-# ax.set_xlabel("Time (s)")
-# ax.set_ylabel("Displacement")
-# ax.set_title("X, Y, Z Displacement vs Time")
-# ax.axhline(0, color="gray", linestyle="--", linewidth=1)
-# ax.legend(loc="upper right")
-# plt.show()
