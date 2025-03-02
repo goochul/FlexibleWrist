@@ -21,13 +21,14 @@ file_paths = [
 
     # Path('data/20250223/204632/'),
     # Path('data/20250223/205123/'),
-
+<<<<<<< HEAD
     # Path('data/20250223/205921/'),
 
-    # Path('data/20250223/210908/'),
+    Path('data/20250223/210908/'),
 
     
-    Path('data/20250228/200924/'),
+=======
+
 
     # Path('data/20250228/192957/'),
     # Path('data/20250228/193106/'),
@@ -37,20 +38,14 @@ file_paths = [
     # Path('data/20250301/000521/'),
     # Path('data/20250301/000802/'),
 
-    # Path('data/20250301/005049/'),
-    # Path('data/20250301/005436/'),
-    # Path('data/20250301/005724/'),
-
-    # Path('data/20250301/005049/'),
-    # Path('data/20250301/005436/'),
-    # Path('data/20250301/005724/'),
+    Path('data/20250301/005049/'),
+    Path('data/20250301/005436/'),
+    Path('data/20250301/005724/'),
     
     
 
+>>>>>>> refs/remotes/origin/main
 ]
-
-force_plot_title = "Flexible Wrist + 55mm Peak Height: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
-torque_plot_title = "Flexible Wrist + 55mm Peak Height: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
 
 # Low-pass filter function
 def low_pass_filter(data, cutoff, fs, order=4):
@@ -228,7 +223,7 @@ ax1b.set_ylabel("Y Position (m)", color='red')
 ax1b.tick_params(axis='y', labelcolor='red')
 ax1b.set_ylim([-0.5, 0.5])
 ax1b.axhline(0, color='gray', linestyle='--', linewidth=1)
-ax1.set_title(force_plot_title)
+ax1.set_title("Figure 1: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position - Flexible Wrist + 65mm peak height")
 lines1, labels1 = ax1.get_legend_handles_labels()
 lines1b, labels1b = ax1b.get_legend_handles_labels()
 ax1.legend(lines1 + lines1b, labels1 + labels1b, loc='upper right')
@@ -238,16 +233,19 @@ ax3.plot(mean_raw_force.index.to_numpy(), mean_raw_force.to_numpy(), label="Raw 
 ax3.fill_between(mean_raw_force.index.to_numpy(), 
                  mean_raw_force.to_numpy() - std_raw_force.to_numpy(), 
                  mean_raw_force.to_numpy() + std_raw_force.to_numpy(),
+<<<<<<< HEAD
                  color="green", alpha=0.3, label="Raw Force Mag Std Dev")
 # Add raw Fx, Fy, Fz lines
 # ax3.plot(mean_raw_fx.index.to_numpy(), mean_raw_fx.to_numpy(), label="Raw Fx", color="blue", linestyle="--")
 # ax3.plot(mean_raw_fy.index.to_numpy(), mean_raw_fy.to_numpy(), label="Raw Fy", color="orange", linestyle="--")
 # ax3.plot(mean_raw_fz.index.to_numpy(), mean_raw_fz.to_numpy(), label="Raw Fz", color="purple", linestyle="--")
 
+=======
+                 color="green", alpha=0.3, label="Raw Force Std Dev")
 ax3.plot(rotated_raw_fx.index.to_numpy(), rotated_raw_fx.to_numpy(), label="Rotated_Raw_Fx", color='cyan', linestyle='--')
 ax3.plot(rotated_raw_fy.index.to_numpy(), rotated_raw_fy.to_numpy(), label="Rotated_Raw_Fy", color='magenta', linestyle='--')
 ax3.plot(rotated_raw_fz.index.to_numpy(), rotated_raw_fz.to_numpy(), label="Rotated_Raw_Fz", color='brown', linestyle='--')
-
+>>>>>>> refs/remotes/origin/main
 ax3.set_xlabel("Time (s)")
 ax3.set_ylabel("Force (N)", color="green")
 ax3.tick_params(axis="y", labelcolor="green")
@@ -300,7 +298,7 @@ ax5b.set_ylabel("Y Position (m)", color='red')
 ax5b.tick_params(axis='y', labelcolor='red')
 ax5b.set_ylim([-0.5, 0.5])
 ax5b.axhline(0, color='gray', linestyle='--', linewidth=1)
-ax5.set_title(torque_plot_title)
+ax5.set_title("Figure 2: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position - Flexible Wrist + 65mm peak height")
 ax5.set_ylim([-4, 4])
 lines5, labels5 = ax5.get_legend_handles_labels()
 lines5b, labels5b = ax5b.get_legend_handles_labels()

@@ -19,6 +19,8 @@ file_paths = [
     # Path('data/20250223/152241/'),
     # Path('data/20250223/153138/'),
 
+    # Path('data/20250223/194745/')
+
     # Path('data/20250223/204632/'),
     # Path('data/20250223/205123/'),
 
@@ -26,8 +28,7 @@ file_paths = [
 
     # Path('data/20250223/210908/'),
 
-    
-    Path('data/20250228/200924/'),
+
 
     # Path('data/20250228/192957/'),
     # Path('data/20250228/193106/'),
@@ -37,20 +38,35 @@ file_paths = [
     # Path('data/20250301/000521/'),
     # Path('data/20250301/000802/'),
 
-    # Path('data/20250301/005049/'),
-    # Path('data/20250301/005436/'),
-    # Path('data/20250301/005724/'),
+    # 50mm + FW
+    # Path('data/20250301/003805/'),
+    # Path('data/20250301/004152/'),
+    # Path('data/20250301/004414/'),
 
-    # Path('data/20250301/005049/'),
-    # Path('data/20250301/005436/'),
-    # Path('data/20250301/005724/'),
+    # 55mm + FW
+    Path('data/20250301/005049/'),
+    Path('data/20250301/005436/'),
+    Path('data/20250301/005724/'),
+
+
+    # 50mm + Rigid
+    # Path('data/20250301/012520/')
     
+    # 55mm + Rigid
+    # Path('data/20250301/012216/'),
+ 
     
 
 ]
 
 force_plot_title = "Flexible Wrist + 55mm Peak Height: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
 torque_plot_title = "Flexible Wrist + 55mm Peak Height: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
+eef_plot_title = "Flexible Wrist + 55mm Peak Height: End-Effector Position - X-Direction and Z-Direction"
+# eef_plot_title = "Previous (Low speed + No state estimator )"
+
+# force_plot_title = "Rigid + 55mm Peak Height: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
+# torque_plot_title = "Rigid + 55mm Peak Height: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
+# eef_plot_title = "Rigid + 55mm Peak Height: End-Effector Position - X-Direction and Z-Direction"
 
 # Low-pass filter function
 def low_pass_filter(data, cutoff, fs, order=4):
@@ -64,15 +80,17 @@ def process_dataset(file_path):
     force_data = pd.read_csv(file_path / 'force_data.csv')
     torque_data = pd.read_csv(file_path / 'torque_data.csv')
     y_position_data = pd.read_csv(file_path / 'y_position_data.csv')
+    # eef_position_data = pd.read_csv(file_path / 'eef_positions.csv')
     
     # Round timestamps for alignment
     force_data['Timestamp'] = force_data['Timestamp'].round(2)
     torque_data['Timestamp'] = torque_data['Timestamp'].round(2)
     y_position_data['Timestamp'] = y_position_data['Timestamp'].round(2)
+    # eef_position_data['Timestamp'] = eef_position_data['Timestamp'].round(2)
     
     # Sampling settings
     sampling_frequency = 30
-    cutoff_frequency = 0.2
+    cutoff_frequency = 0.8
 
     # Apply low-pass filter to Force Magnitude and individual force components
     force_data['Filtered Force Magnitude'] = low_pass_filter(
@@ -334,43 +352,59 @@ lines7b, labels7b = ax7b.get_legend_handles_labels()
 ax7.legend(lines7 + lines7b, labels7 + labels7b, loc="upper right")
 
 # Show both figures (they will appear in separate windows)
-plt.show()
-
-
-# # ----- Reindex raw X, Y, Z displacement data -----
-# aligned_raw_x = [df.set_index('Timestamp')['X_Offset'].reindex(time).interpolate() for df in processed_datasets]
-# aligned_raw_y_disp = [df.set_index('Timestamp')['Y_Offset'].reindex(time).interpolate() for df in processed_datasets]
-# aligned_raw_z = [df.set_index('Timestamp')['Z_Offset'].reindex(time).interpolate() for df in processed_datasets]
-
-# # Compute means and standard deviations for raw X, Y, and Z displacements
-# mean_raw_x = pd.concat(aligned_raw_x, axis=1).mean(axis=1)
-# std_raw_x  = pd.concat(aligned_raw_x, axis=1).std(axis=1)
-# mean_raw_y_disp = pd.concat(aligned_raw_y_disp, axis=1).mean(axis=1)
-# std_raw_y_disp  = pd.concat(aligned_raw_y_disp, axis=1).std(axis=1)
-# mean_raw_z = pd.concat(aligned_raw_z, axis=1).mean(axis=1)
-# std_raw_z  = pd.concat(aligned_raw_z, axis=1).std(axis=1)
-
-# # ----- Plot X, Y, and Z displacement vs Time -----
-# fig3, ax = plt.subplots(figsize=(12, 6))
-# ax.plot(mean_raw_x.index.to_numpy(), mean_raw_x.to_numpy(), label="X Displacement", color="blue")
-# ax.fill_between(mean_raw_x.index.to_numpy(), 
-#                 (mean_raw_x - std_raw_x).to_numpy(), 
-#                 (mean_raw_x + std_raw_x).to_numpy(), 
-#                 color="blue", alpha=0.3)
-# ax.plot(mean_raw_y_disp.index.to_numpy(), mean_raw_y_disp.to_numpy(), label="Y Displacement", color="red")
-# ax.fill_between(mean_raw_y_disp.index.to_numpy(), 
-#                 (mean_raw_y_disp - std_raw_y_disp).to_numpy(), 
-#                 (mean_raw_y_disp + std_raw_y_disp).to_numpy(), 
-#                 color="red", alpha=0.3)
-# ax.plot(mean_raw_z.index.to_numpy(), mean_raw_z.to_numpy(), label="Z Displacement", color="green")
-# ax.fill_between(mean_raw_z.index.to_numpy(), 
-#                 (mean_raw_z - std_raw_z).to_numpy(), 
-#                 (mean_raw_z + std_raw_z).to_numpy(), 
-#                 color="green", alpha=0.3)
-
-# ax.set_xlabel("Time (s)")
-# ax.set_ylabel("Displacement")
-# ax.set_title("X, Y, Z Displacement vs Time")
-# ax.axhline(0, color="gray", linestyle="--", linewidth=1)
-# ax.legend(loc="upper right")
 # plt.show()
+
+
+# ----- Process EEF Position Data for Shaded Error Plot -----
+# Read eef_positions.csv for each file path
+eef_data_list = []
+for path in file_paths:
+    eef = pd.read_csv(path / 'eef_positions.csv')
+    eef['Timestamp'] = eef['Timestamp'].round(2)
+    eef_data_list.append(eef)
+
+# Create a common time axis for EEF data (using the first dataset as reference and dropping duplicates)
+time_eef = eef_data_list[0]['Timestamp'].drop_duplicates().sort_values()
+
+# Reindex each column on the common time axis and interpolate, removing duplicate timestamps in each dataset
+def get_aligned_series(df, col, time_axis):
+    df_unique = df.drop_duplicates(subset='Timestamp').set_index('Timestamp')
+    return df_unique[col].reindex(time_axis).interpolate()
+
+aligned_x = [get_aligned_series(df, 'X_Offset', time_eef) for df in eef_data_list]
+aligned_y = [get_aligned_series(df, 'Y_Offset', time_eef) for df in eef_data_list]
+aligned_z = [get_aligned_series(df, 'Z_Offset', time_eef) for df in eef_data_list]  # Updated column name
+
+# Compute mean and standard deviation for each offset
+mean_x = pd.concat(aligned_x, axis=1).mean(axis=1)
+std_x  = pd.concat(aligned_x, axis=1).std(axis=1)
+mean_y = pd.concat(aligned_y, axis=1).mean(axis=1)
+std_y  = pd.concat(aligned_y, axis=1).std(axis=1)
+mean_z = pd.concat(aligned_z, axis=1).mean(axis=1)
+std_z  = pd.concat(aligned_z, axis=1).std(axis=1)
+
+# ----- Create Figure 3: EEF Positions vs Time with Shaded Error Bars -----
+fig3, ax8 = plt.subplots(figsize=(10, 6))
+
+# Plot X Offset with shaded error band
+ax8.plot(time_eef, mean_x, label='X Offset', color='blue')
+ax8.fill_between(time_eef, mean_x - std_x, mean_x + std_x, color='blue', alpha=0.3)
+
+# # Plot Y Offset with shaded error band
+ax8.plot(time_eef, mean_y, label='Y Offset', color='red')
+ax8.fill_between(time_eef, mean_y - std_y, mean_y + std_y, color='red', alpha=0.3)
+
+# Plot Z Offset with shaded error band
+ax8.plot(time_eef, mean_z, label='Z Offset', color='green')
+ax8.fill_between(time_eef, mean_z - std_z, mean_z + std_z, color='green', alpha=0.3)
+
+ax8.set_xlabel("Time (s)")
+ax8.set_ylabel("Displacement")
+ax8.set_title(eef_plot_title)
+ax8.axhline(0, color="gray", linestyle="--", linewidth=1)
+ax8.legend()
+
+# Add grid lines to the plot
+ax8.grid(True)
+
+plt.show()

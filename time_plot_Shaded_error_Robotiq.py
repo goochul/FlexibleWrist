@@ -8,9 +8,11 @@ import os
 
 # List of file paths
 file_paths = [
-    Path('data/20250222/232016/'),
-    Path('data/20250222/232359/'),
-    Path('data/20250222/232840/'),
+    # Path('data/20250222/232016/'),
+    # Path('data/20250222/232359/'),
+    # Path('data/20250222/232840/'),
+
+    Path('data/20250228/200924/'),
 
 ]
 
