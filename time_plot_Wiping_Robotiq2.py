@@ -4,6 +4,7 @@ from scipy.signal import butter, filtfilt, argrelextrema
 from pathlib import Path
 import numpy as np
 import os
+import ast
 
 # List of file paths
 file_paths = [
@@ -28,6 +29,17 @@ file_paths = [
 
     # Path('data/20250223/210908/'),
 
+    # Path('data/20250302/184834/'),
+
+    # 0302 50mm Wiping Test
+    # Path('data/20250302/192458/'),
+    # Path('data/20250302/193221/'),
+    # Path('data/20250302/193453/'),
+    # Path('data/20250302/193729/'),
+
+    # 0302 50mm Wiping Test - No Sponge
+    Path('data/20250302/200155/'),
+    Path('data/20250302/200349/'),
 
 
     # Path('data/20250228/192957/'),
@@ -44,9 +56,9 @@ file_paths = [
     # Path('data/20250301/004414/'),
 
     # 55mm + FW
-    Path('data/20250301/005049/'),
-    Path('data/20250301/005436/'),
-    Path('data/20250301/005724/'),
+    # Path('data/20250301/005049/'),
+    # Path('data/20250301/005436/'),
+    # Path('data/20250301/005724/'),
 
 
     # 50mm + Rigid
@@ -59,9 +71,9 @@ file_paths = [
 
 ]
 
-force_plot_title = "Flexible Wrist + 55mm Peak Height: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
-torque_plot_title = "Flexible Wrist + 55mm Peak Height: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
-eef_plot_title = "Flexible Wrist + 55mm Peak Height: End-Effector Position - X-Direction and Z-Direction"
+force_plot_title = "Flexible Wrist + 50mm Peak Height + No Sponge: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
+torque_plot_title = "Flexible Wrist + 50mm Peak Height + No Sponge: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
+eef_plot_title = "Flexible Wrist + 50mm Peak Height + No Sponge: End-Effector Position - X-Direction and Z-Direction"
 # eef_plot_title = "Previous (Low speed + No state estimator )"
 
 # force_plot_title = "Rigid + 55mm Peak Height: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
@@ -355,56 +367,106 @@ ax7.legend(lines7 + lines7b, labels7 + labels7b, loc="upper right")
 # plt.show()
 
 
-# ----- Process EEF Position Data for Shaded Error Plot -----
-# Read eef_positions.csv for each file path
-eef_data_list = []
-for path in file_paths:
-    eef = pd.read_csv(path / 'eef_positions.csv')
-    eef['Timestamp'] = eef['Timestamp'].round(2)
-    eef_data_list.append(eef)
+# ===============================
+# Figure 4: End-Effector Position & Orientation from Joint Positions vs Timestamp
+# ===============================
+# --- Joint Positions and FK Processing ---
+joint_positions_path = Path('data/20250302/184834/joint_positions.csv')
+joint_angles_list = []
+with joint_positions_path.open('r') as f:
+    for line in f:
+        # Remove whitespace and any wrapping quotes.
+        line = line.strip().strip('"')
+        if line.startswith('['):
+            try:
+                joint_angles = [float(x) for x in ast.literal_eval(line)]
+                joint_angles_list.append(joint_angles)
+            except Exception as e:
+                print(f"Error parsing line: {line}\n{e}")
+        else:
+            print(f"Skipping line: {line}")
+if not joint_angles_list:
+    raise ValueError("No valid joint angles were parsed from the CSV file.")
 
-# Create a common time axis for EEF data (using the first dataset as reference and dropping duplicates)
-time_eef = eef_data_list[0]['Timestamp'].drop_duplicates().sort_values()
+# Define DH parameters for 7 joints + flange (same as above)
+dh_params_fk = np.array([
+    [0,       0.333,  0],
+    [0,       0,     -np.pi/2],
+    [0,       0.316,  np.pi/2],
+    [0.0825,  0,      np.pi/2],
+    [-0.0825, 0.384, -np.pi/2],
+    [0,       0,      np.pi/2],
+    [0.088,   0,      np.pi/2],
+    [0,       0.107,  0]
+])
 
-# Reindex each column on the common time axis and interpolate, removing duplicate timestamps in each dataset
-def get_aligned_series(df, col, time_axis):
-    df_unique = df.drop_duplicates(subset='Timestamp').set_index('Timestamp')
-    return df_unique[col].reindex(time_axis).interpolate()
+def dh_transform(a, d, alpha, theta):
+    T = np.array([
+        [np.cos(theta), -np.sin(theta), 0,           a],
+        [np.sin(theta)*np.cos(alpha),  np.cos(theta)*np.cos(alpha), -np.sin(alpha), -d*np.sin(alpha)],
+        [np.sin(theta)*np.sin(alpha),  np.cos(theta)*np.sin(alpha),  np.cos(alpha),  d*np.cos(alpha)],
+        [0,                0,               0,                    1]
+    ], dtype=float)
+    return T
 
-aligned_x = [get_aligned_series(df, 'X_Offset', time_eef) for df in eef_data_list]
-aligned_y = [get_aligned_series(df, 'Y_Offset', time_eef) for df in eef_data_list]
-aligned_z = [get_aligned_series(df, 'Z_Offset', time_eef) for df in eef_data_list]  # Updated column name
+def forward_kinematics(joint_angles, dh_params):
+    T_final = np.eye(4)
+    for i in range(len(joint_angles)):
+        a = dh_params[i, 0]
+        d = dh_params[i, 1]
+        alpha = dh_params[i, 2]
+        theta = joint_angles[i]
+        T_final = T_final @ dh_transform(a, d, alpha, theta)
+    return T_final
 
-# Compute mean and standard deviation for each offset
-mean_x = pd.concat(aligned_x, axis=1).mean(axis=1)
-std_x  = pd.concat(aligned_x, axis=1).std(axis=1)
-mean_y = pd.concat(aligned_y, axis=1).mean(axis=1)
-std_y  = pd.concat(aligned_y, axis=1).std(axis=1)
-mean_z = pd.concat(aligned_z, axis=1).mean(axis=1)
-std_z  = pd.concat(aligned_z, axis=1).std(axis=1)
+def rotation_matrix_to_euler_angles(R):
+    yaw = np.arctan2(R[1, 0], R[0, 0])
+    pitch = np.arctan2(-R[2, 0], np.sqrt(R[2, 1]**2 + R[2, 2]**2))
+    roll = np.arctan2(R[2, 1], R[2, 2])
+    return roll, pitch, yaw
 
-# ----- Create Figure 3: EEF Positions vs Time with Shaded Error Bars -----
-fig3, ax8 = plt.subplots(figsize=(10, 6))
+positions_fk = []    # End-effector positions
+orientations_fk = [] # Euler angles: roll, pitch, yaw
+for joint_angles in joint_angles_list:
+    T_step = forward_kinematics(joint_angles, dh_params_fk[:7, :])
+    T_step = T_step @ dh_transform(dh_params_fk[7, 0], dh_params_fk[7, 1], dh_params_fk[7, 2], 0.0)
+    pos = T_step[0:3, 3]
+    positions_fk.append(pos)
+    roll, pitch, yaw = rotation_matrix_to_euler_angles(T_step[:3, :3])
+    orientations_fk.append([roll, pitch, yaw])
+positions_fk = np.array(positions_fk)
+orientations_fk = np.array(orientations_fk)
 
-# Plot X Offset with shaded error band
-ax8.plot(time_eef, mean_x, label='X Offset', color='blue')
-ax8.fill_between(time_eef, mean_x - std_x, mean_x + std_x, color='blue', alpha=0.3)
+# --- Load Timestamps from y_position_data.csv ---
+y_position_path_fk = Path('data/20250302/184834/y_position_data.csv')
+y_data_fk = pd.read_csv(y_position_path_fk)
+timestamps_fk = y_data_fk["Timestamp"].values
+if len(timestamps_fk) != positions_fk.shape[0]:
+    print("Warning: Number of timestamps does not match number of joint steps. Using step index instead.")
+    x_axis_fk = np.arange(positions_fk.shape[0])
+else:
+    x_axis_fk = timestamps_fk
 
-# # Plot Y Offset with shaded error band
-ax8.plot(time_eef, mean_y, label='Y Offset', color='red')
-ax8.fill_between(time_eef, mean_y - std_y, mean_y + std_y, color='red', alpha=0.3)
+# --- Plot Figure 4 ---
+fig4, (ax_upper, ax_lower) = plt.subplots(2, 1, figsize=(10, 10))
+ax_upper.plot(x_axis_fk, positions_fk[:, 0], label="X Position", color="blue")
+ax_upper.plot(x_axis_fk, positions_fk[:, 1], label="Y Position", color="red")
+ax_upper.plot(x_axis_fk, positions_fk[:, 2], label="Z Position", color="green")
+ax_upper.set_xlabel("Timestamp")
+ax_upper.set_ylabel("Position (m)")
+ax_upper.set_title("Rigid 10mm Peak Height: End-Effector Position vs Timestamp")
+ax_upper.axhline(0, color="gray", linestyle="--", linewidth=1)
+ax_upper.legend()
+ax_upper.grid(True)
+ax_lower.plot(x_axis_fk, orientations_fk[:, 0], label="Roll", color="blue")
+ax_lower.plot(x_axis_fk, orientations_fk[:, 1], label="Pitch", color="red")
+ax_lower.plot(x_axis_fk, orientations_fk[:, 2], label="Yaw", color="green")
+ax_lower.set_xlabel("Timestamp")
+ax_lower.set_ylabel("Angle (rad)")
+ax_lower.set_title("Rigid 10mm Peak Height: End-Effector Orientation vs Timestamp")
+ax_lower.axhline(0, color="gray", linestyle="--", linewidth=1)
+ax_lower.legend()
+ax_lower.grid(True)
 
-# Plot Z Offset with shaded error band
-ax8.plot(time_eef, mean_z, label='Z Offset', color='green')
-ax8.fill_between(time_eef, mean_z - std_z, mean_z + std_z, color='green', alpha=0.3)
-
-ax8.set_xlabel("Time (s)")
-ax8.set_ylabel("Displacement")
-ax8.set_title(eef_plot_title)
-ax8.axhline(0, color="gray", linestyle="--", linewidth=1)
-ax8.legend()
-
-# Add grid lines to the plot
-ax8.grid(True)
-
+plt.tight_layout()
 plt.show()

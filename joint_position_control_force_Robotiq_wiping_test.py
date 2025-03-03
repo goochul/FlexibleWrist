@@ -266,8 +266,8 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         time.sleep(0.01)
 
 def joint_position_control(robot_interface, controller_cfg):
-    reset_joint_positions = [0.3248, 0.8666, 0.1344, -1.8463, 0.4390, 4.3773, -0.2628]
-    des_joint_positions = [0.3248, 0.8666, 0.1344, -1.8463, 0.4390, 4.3773, -0.2628]
+    reset_joint_positions =  [0.2611, 0.8069, 0.1114, -1.8153, 0.3791, 4.2682, -0.2511]
+    des_joint_positions = [0.2611, 0.8069, 0.1114, -1.8153, 0.3791, 4.2682, -0.2511]
     # values for the flexible wrist + robotiq
     # [0.1446, 0.7525, 0.0612, -2.0602, 0.2031, 4.4167, 0.6396]
     # values for the non flexible wrist + robotiq
@@ -471,10 +471,10 @@ def main():
     global_start_time = time.time()
 
     # Create data folder path
-    date_folder = time.strftime("%Y%m%d")
-    time_folder = time.strftime("%H%M%S")
-    data_folder = os.path.join("data", date_folder, time_folder)
-    os.makedirs(data_folder, exist_ok=True)
+    # date_folder = time.strftime("%Y%m%d")
+    # time_folder = time.strftime("%H%M%S")
+    # data_folder = os.path.join("data", date_folder, time_folder)
+    # os.makedirs(data_folder, exist_ok=True)
 
     # Start video recording thread if camera is enabled
     if args.enable_camera:

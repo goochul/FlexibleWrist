@@ -255,7 +255,7 @@ def joint_position_control(robot_interface, controller_cfg):
     # with flexible wrist
     move_up_joint_positions = [-0.2396, 0.6690, -0.1464, -2.0208, -0.3729, 4.3338, 0.9931]
     des_joint_positions = [0.2964, 0.6880, 0.1408, -1.9778, 0.4419, 4.3279, 0.4650]
-    reset_joint_positions = [0.3526, 0.8952, 0.1425, -1.8025, 0.4706, 4.3752, -0.2883]
+    reset_joint_positions = [0.2611, 0.8069, 0.1114, -1.8153, 0.3791, 4.2682, -0.2511]
 
     # # wihtout flexible wrist
     # move_up_joint_positions = [-0.5762, 1.0309, -0.1781, -1.2546, -0.7909, 4.1587, 0.6511]

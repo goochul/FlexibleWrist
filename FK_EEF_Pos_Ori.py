@@ -32,7 +32,7 @@ def rotation_matrix_to_euler_angles(R):
 # -------------------------------
 # Parse the joint_positions.csv file
 # -------------------------------
-joint_positions_path = Path('data/20250228/200924/joint_positions.csv')
+joint_positions_path = Path('data/20250302/150200/joint_positions.csv')
 joint_angles_list = []
 
 with joint_positions_path.open('r') as f:
