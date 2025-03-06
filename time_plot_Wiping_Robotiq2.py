@@ -37,10 +37,6 @@ file_paths = [
     # Path('data/20250302/193453/'),
     # Path('data/20250302/193729/'),
 
-    # 0302 50mm Wiping Test - No Sponge
-    Path('data/20250302/200155/'),
-    Path('data/20250302/200349/'),
-
 
     # Path('data/20250228/192957/'),
     # Path('data/20250228/193106/'),
@@ -61,22 +57,57 @@ file_paths = [
     # Path('data/20250301/005724/'),
 
 
-    # 50mm + Rigid
-    # Path('data/20250301/012520/')
+    # FW - 20mm space
+    # Path('data/20250302/182534/'),
+    # Path('data/20250302/182730/'),
+    # Path('data/20250302/182941/'),
+
+
+    #---- 0302 Test -----
+
+    # FW - 0mm space
+    # Path('data/20250302/174847/'),
+    # Path('data/20250302/175224/'),
+    # Path('data/20250302/175419/'),
+
+    # FW - 5mm space
+    # Path('data/20250302/180324/'),
+    # Path('data/20250302/180437/'),
+    # Path('data/20250302/180558/'),
+
+    # FW - 10mm space
+    Path('data/20250302/181233/'),
+    Path('data/20250302/181537/'),
+    Path('data/20250302/181722/'),
+
+    # # FW - 15mm space
+    # Path('data/20250302/182031/'),
+    # Path('data/20250302/182142/'),
+    # Path('data/20250302/182248/'),
+
+    # FW - 20mm space
+    # Path('data/20250302/182534/'),
+    # Path('data/20250302/182730/'),
+    # Path('data/20250302/182941/'),
     
-    # 55mm + Rigid
-    # Path('data/20250301/012216/'),
- 
-    
+    # FW - 50mm space
+    # Path('data/20250302/192458/'),
+    # Path('data/20250302/193221/'),
+    # Path('data/20250302/193453/'),
+
+    # FW - 55mm space
+    # Path('data/20250302/194923/'),
+    # Path('data/20250302/195041/'),
+    # Path('data/20250302/195340/'),
+
 
 ]
 
-force_plot_title = "Flexible Wrist + 50mm Peak Height + No Sponge: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
-torque_plot_title = "Flexible Wrist + 50mm Peak Height + No Sponge: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
-eef_plot_title = "Flexible Wrist + 50mm Peak Height + No Sponge: End-Effector Position - X-Direction and Z-Direction"
-# eef_plot_title = "Previous (Low speed + No state estimator )"
+force_plot_title = "Flexible Wrist + 10mm Space: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
+torque_plot_title = "Flexible Wrist + 10mm Space: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
+eef_plot_title = "Flexible Wrist + 5mm Space: End-Effector Position - X-Direction and Z-Direction"
 
-# force_plot_title = "Rigid + 55mm Peak Height: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
+# force_plot_title = "Rigid + 10mm Peak Height: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
 # torque_plot_title = "Rigid + 55mm Peak Height: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
 # eef_plot_title = "Rigid + 55mm Peak Height: End-Effector Position - X-Direction and Z-Direction"
 
@@ -231,7 +262,7 @@ mean_raw_fy = sin_angle * mean_raw_fx + cos_angle * mean_raw_fy
 # =======================================================
 # Figure 1: Raw Force and Raw Y Position
 # =======================================================
-fig1, (ax1, ax3) = plt.subplots(2, 1, figsize=(12, 12))  # Two rows in Figure 1
+fig1, (ax1, ax3) = plt.subplots(2, 1, figsize=(10, 10))  # Two rows in Figure 1
 
 # --- Top subplot: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position ---
 ax1.plot(mean_force.index.to_numpy(), mean_force.to_numpy(), label="Filtered Force Mag", color='blue')
@@ -262,6 +293,7 @@ ax1.set_title(force_plot_title)
 lines1, labels1 = ax1.get_legend_handles_labels()
 lines1b, labels1b = ax1b.get_legend_handles_labels()
 ax1.legend(lines1 + lines1b, labels1 + labels1b, loc='upper right')
+# ax1.legend(lines1 + lines1b, labels1 + labels1b, loc='lower left')
 
 # --- Bottom subplot: Raw Force and Raw Y Position ---
 ax3.plot(mean_raw_force.index.to_numpy(), mean_raw_force.to_numpy(), label="Raw Force Mag", color="green")
@@ -299,11 +331,12 @@ ax3.set_title("Figure 1: Raw Force and Raw Y Position")
 lines3, labels3 = ax3.get_legend_handles_labels()
 lines3b, labels3b = ax3b.get_legend_handles_labels()
 ax3.legend(lines3 + lines3b, labels3 + labels3b, loc="upper right")
+# ax3.legend(lines3 + lines3b, labels3 + labels3b, loc="lower left")
 
 # =======================================================
 # Figure 2: Torque and Y Position (Raw Torque Plots)
 # =======================================================
-fig2, (ax5, ax7) = plt.subplots(2, 1, figsize=(12, 12))  # Two rows in Figure 2
+fig2, (ax5, ax7) = plt.subplots(2, 1, figsize=(10, 10))  # Two rows in Figure 2
 
 # --- Top subplot: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position ---
 ax5.plot(mean_torque.index.to_numpy(), mean_torque.to_numpy(), label="Filtered Torque Mag", color="purple")
@@ -335,6 +368,7 @@ ax5.set_ylim([-4, 4])
 lines5, labels5 = ax5.get_legend_handles_labels()
 lines5b, labels5b = ax5b.get_legend_handles_labels()
 ax5.legend(lines5 + lines5b, labels5 + labels5b, loc='upper right')
+# ax5.legend(lines5 + lines5b, labels5 + labels5b, loc='lower left')
 
 # --- Bottom subplot: Raw Torque and Raw Y Position ---
 ax7.plot(mean_raw_torque.index.to_numpy(), mean_raw_torque.to_numpy(), label="Raw Torque Mag", color="orange")
@@ -362,6 +396,7 @@ ax7.set_ylim([-4, 4])
 lines7, labels7 = ax7.get_legend_handles_labels()
 lines7b, labels7b = ax7b.get_legend_handles_labels()
 ax7.legend(lines7 + lines7b, labels7 + labels7b, loc="upper right")
+# ax7.legend(lines7 + lines7b, labels7 + labels7b, loc="lower left")
 
 # Show both figures (they will appear in separate windows)
 # plt.show()
@@ -450,7 +485,7 @@ else:
 # --- Plot Figure 4 ---
 fig4, (ax_upper, ax_lower) = plt.subplots(2, 1, figsize=(10, 10))
 ax_upper.plot(x_axis_fk, positions_fk[:, 0], label="X Position", color="blue")
-ax_upper.plot(x_axis_fk, positions_fk[:, 1], label="Y Position", color="red")
+# ax_upper.plot(x_axis_fk, positions_fk[:, 1], label="Y Position", color="red")
 ax_upper.plot(x_axis_fk, positions_fk[:, 2], label="Z Position", color="green")
 ax_upper.set_xlabel("Timestamp")
 ax_upper.set_ylabel("Position (m)")

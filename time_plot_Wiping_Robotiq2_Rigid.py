@@ -28,7 +28,7 @@ file_paths = [
     # Path('data/20250223/210908/'),
 
     # 10mm + Rigid
-    Path('data/20250228/200924/'),
+    # Path('data/20250228/200924/'),
 
     # 15mm + Rigid
     # Path('data/20250228/201337/'),
@@ -61,17 +61,57 @@ file_paths = [
     # 55mm + Rigid
     # Path('data/20250301/012216/'),
  
+    #---- 0302 Test -----
+
+    # Rigid - 10mm space - No Sponge
+    # Path('data/20250302/200155/'),
+    # Path('data/20250302/200349/'),
+
+    # Rigid - 0mm space
+    # Path('data/20250302/161651/'),
+    # Path('data/20250302/161811/'),
+    # Path('data/20250302/161919/'),
+
+    # Rigid - 5mm space
+    # Path('data/20250302/161111/'),
+    # Path('data/20250302/161218/'),
+    # Path('data/20250302/161327/'),
+
+    # Rigid - 10mm space
+    # Path('data/20250302/160440/'),
+    # Path('data/20250302/160706/'),
+    # Path('data/20250302/160814/'),
     
+    # Rigid - 14mm space
+    # Path('data/20250302/204348/'),
+    # Path('data/20250302/204537/'),
+    # Path('data/20250302/204700/'),
+
+    # Rigid - 15mm space
+    # Path('data/20250302/202941/'),
+
+    # Rigid - 20mm space
+    # Path('data/20250302/162555/'),
+
+
+
+#-Sample- 
+
+    # Rigid - 10mm space
+    # Path('data/20250302/160440/'),
+    # Path('data/20250302/160706/'),
+    # Path('data/20250302/160814/'),
 
 ]
 
-# force_plot_title = "Flexible Wrist + 50mm Peak Height: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
-# torque_plot_title = "Flexible Wrist + 50mm Peak Height: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
-# eef_plot_title = "Flexible Wrist + 50mm Peak Height: End-Effector Position - X-Direction and Z-Direction"
+force_plot_title = "Rigid + 20mm Peak Height: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
+torque_plot_title = "Rigid + 20mm Peak Height: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
+eef_plot_title = "Rigid + 20mm Peak Height: End-Effector Position - X-Direction and Z-Direction"
 
-force_plot_title = "Rigid + 10mm Peak Height: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
-torque_plot_title = "Rigid + 10mm Peak Height: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
-eef_plot_title = "Rigid + 10mm Peak Height: End-Effector Position - X-Direction and Z-Direction"
+# force_plot_title = "Flexible Wrist + 50mm Peak Height + No Sponge: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
+# torque_plot_title = "Flexible Wrist + 50mm Peak Height + No Sponge: Filtered Torque (with Rotated Tx, Rotated Ty, Tz) and Y Position"
+# eef_plot_title = "Flexible Wrist + 50mm Peak Height + No Sponge: End-Effector Position - X-Direction and Z-Direction"
+# eef_plot_title = "Previous (Low speed + No state estimator )"
 
 # Low-pass filter function
 def low_pass_filter(data, cutoff, fs, order=4):
