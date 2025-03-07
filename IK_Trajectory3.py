@@ -121,7 +121,7 @@ def main():
     ])
 
     # Initial joint values (theta) in radians (7 joints only)
-    initial_joint_positions = np.array( [0.2611, 0.8069, 0.1114, -1.8153, 0.3791, 4.2682, -0.2511]  )
+    initial_joint_positions = np.array([-0.0896, 0.8878, -0.0601, -2.0298, -0.1237, 4.5136, 0.8201])
 
     # FW 0mm init
     #[0.3519, 0.6895, 0.1798, -2.0106, 0.5197, 4.3909, 0.4279]
@@ -134,19 +134,19 @@ def main():
     current_orientation = T[0:3, 0:3]
     q_current = rotm2quat(current_orientation)
 
-    # # Move +x by 0.1 m in 10 steps
-    # n_steps = 5
-    # desired_positions = np.tile(current_position, (n_steps, 1))
-    # desired_positions[:, 0] = np.linspace(current_position[0], 
-    #                                       current_position[0] - 0.01, 
-    #                                       n_steps)
-
-    # # Move +Y by 0.1 m in 10 steps
+    # Move +x by 0.1 m in 10 steps
     n_steps = 100
     desired_positions = np.tile(current_position, (n_steps, 1))
-    desired_positions[:, 1] = np.linspace(current_position[1], 
-                                          current_position[1] - 0.35, 
+    desired_positions[:, 0] = np.linspace(current_position[0], 
+                                          current_position[0] + 0.1, 
                                           n_steps)
+
+    # # Move +Y by 0.1 m in 10 steps
+    # n_steps = 100
+    # desired_positions = np.tile(current_position, (n_steps, 1))
+    # desired_positions[:, 1] = np.linspace(current_position[1], 
+    #                                       current_position[1] - 0.35, 
+    #                                       n_steps)
     
     # # Move +Y by 0.1 m in 10 steps
     # n_steps = 5
@@ -159,7 +159,7 @@ def main():
     # n_steps = 5
     # desired_positions = np.tile(current_position, (n_steps, 1))
     # desired_positions[:, 2] = np.linspace(current_position[2], 
-    #                                       current_position[2] - 0.004, 
+    #                                       current_position[2] - 0.05, 
     #                                       n_steps)
 
     # Desired orientation remains the same

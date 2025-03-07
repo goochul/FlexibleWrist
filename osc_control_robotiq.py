@@ -67,8 +67,8 @@ def osc_move(robot_interface, controller_type, controller_cfg, target_pose, num_
         # action_axis_angle = np.zeros(3)
         
         # Compute translational command:
-        action_pos = (target_pos - current_pos).flatten() * 15
-        action_pos = np.clip(action_pos, -2.0, 2.0)
+        action_pos = (target_pos - current_pos).flatten() * 5
+        action_pos = np.clip(action_pos, -1.0, 1.0)
 
         action_axis_angle = axis_angle_diff.flatten() * 5
         action_axis_angle = np.clip(action_axis_angle, -0.6, 0.6)
@@ -92,7 +92,7 @@ def move_to_target_pose(
     num_steps,
     num_additional_steps,
     interpolation_method,
-    type='euler'
+    type='quaternion'
 ):
     while robot_interface.state_buffer_size == 0:
         logger.warn("Robot state not received")
@@ -172,7 +172,7 @@ def main():
         logger.warn("Robot state not received")
         time.sleep(0.5)
 
-    reset_joint_positions = [0.2221, 0.7754, 0.0982, -2.0070, 0.3110, 4.4065, 0.5720]
+    reset_joint_positions = [-0.0896, 0.8878, -0.0601, -2.0298, -0.1237, 4.5136, 0.8201]
     reset_joints_to(robot_interface, reset_joint_positions)
 
     current_ee_pose = robot_interface.last_eef_pose
@@ -186,11 +186,11 @@ def main():
         robot_interface,
         controller_type,
         controller_cfg,
-        target_delta_pose=[0.0, -0.4, 0.0, 0.0, 0.0, 0.0],
-        num_steps=50,
-        num_additional_steps=50,
+        target_delta_pose=[0.1, 0.0, 0.0, 0.0, 0.0, 0.0],
+        num_steps=100,
+        num_additional_steps=30,
         interpolation_method="linear",
-        type="euler"
+        type="quaternion"
     )
 
     final_ee_pose = robot_interface.last_eef_pose
@@ -199,6 +199,19 @@ def main():
     final_euler_angle_degrees_extr = R.from_matrix(final_rot).as_euler('xyz', degrees=True)
     print("final_euler_angle intr: ", final_euler_angle_degrees_intr)
     print("final_euler_angle extr: ", final_euler_angle_degrees_extr)
+
+    move_to_target_pose(
+        robot_interface,
+        controller_type,
+        controller_cfg,
+        target_delta_pose=[-0.15, 0.0, -0.12, 0.0, 0.0, 0.0],
+        num_steps=100,
+        num_additional_steps=30,
+        interpolation_method="linear",
+        type="quaternion"
+    )
+
+
 
     reset_joints_to(robot_interface, reset_joint_positions)
 

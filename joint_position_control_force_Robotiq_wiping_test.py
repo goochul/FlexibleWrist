@@ -266,8 +266,8 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         time.sleep(0.01)
 
 def joint_position_control(robot_interface, controller_cfg):
-    reset_joint_positions =  [0.2611, 0.8069, 0.1114, -1.8153, 0.3791, 4.2682, -0.2511]
-    des_joint_positions = [0.2611, 0.8069, 0.1114, -1.8153, 0.3791, 4.2682, -0.2511]
+    reset_joint_positions =  [-0.0896, 0.8878, -0.0601, -2.0298, -0.1237, 4.5136, 0.8201]
+    des_joint_positions = [-0.0896, 0.8878, -0.0601, -2.0298, -0.1237, 4.5136, 0.8201]
     # values for the flexible wrist + robotiq
     # [0.1446, 0.7525, 0.0612, -2.0602, 0.2031, 4.4167, 0.6396]
     # values for the non flexible wrist + robotiq
