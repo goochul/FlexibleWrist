@@ -266,13 +266,14 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
         time.sleep(0.01)
 
 def joint_position_control(robot_interface, controller_cfg):
-    reset_joint_positions =  [-0.0896, 0.8878, -0.0601, -2.0298, -0.1237, 4.5136, 0.8201]
-    des_joint_positions = [-0.0896, 0.8878, -0.0601, -2.0298, -0.1237, 4.5136, 0.8201]
+    reset_joint_positions =  [-0.0879, 0.5412, -0.0809, -2.3352, -0.1555, 4.4739, 0.8284]
+    des_joint_positions = [-0.0875, 0.8052, -0.0637, -2.0776, -0.1288, 4.4792, 0.8250]
+    
+    # [-0.09946, -0.82417, -0.18051, -2.7531, -0.234830, 3.517851, 0.79027]
     # values for the flexible wrist + robotiq
     # [0.1446, 0.7525, 0.0612, -2.0602, 0.2031, 4.4167, 0.6396]
     # values for the non flexible wrist + robotiq
     # [0.0183, 0.8028, -0.0007, -1.9434, 0.0256, 4.3367, -0.0539]
-
 
     # reset_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] 
     # des_joint_positions = [-0.0087831, 0.3709803, -0.0241358, -2.1980871, -0.0297141, 4.1597863, 0.7708481] 
@@ -281,12 +282,13 @@ def joint_position_control(robot_interface, controller_cfg):
     if stop_movement.is_set():
         return
     time.sleep(1)
+
     # event label = "1" => loading phase. "2" => unloading phase
     move_to_position(robot_interface, np.array(des_joint_positions), controller_cfg, event_label="1")
     if stop_movement.is_set():
         return
     
-    move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg, event_label="2")
+    # move_to_position(robot_interface, np.array(reset_joint_positions), controller_cfg, event_label="2")
     movement_done.set()
 
 # Gravity Compensation Function
