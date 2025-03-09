@@ -32,15 +32,15 @@ gripper.goTomm(25)
 position_in_mm = gripper.getPositionmm()
 print(position_in_mm)
 
-gripper.goTomm(35)
-position_in_mm = gripper.getPositionmm()
-print(position_in_mm)
+# gripper.goTomm(35)
+# position_in_mm = gripper.getPositionmm()
+# print(position_in_mm)
 
-gripper.goTomm(40)
-position_in_mm = gripper.getPositionmm()
-print(position_in_mm)
+# gripper.goTomm(40)
+# position_in_mm = gripper.getPositionmm()
+# print(position_in_mm)
 
 
-gripper.close()
+# gripper.close()
 
 gripper.printInfo()
