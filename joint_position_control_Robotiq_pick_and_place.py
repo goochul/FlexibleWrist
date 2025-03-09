@@ -652,8 +652,10 @@ def joint_position_control(robot_interface, controller_cfg):
     time.sleep(0.5)
 
     # gripper.close()
-    gripper.goTomm(20)
+    gripper.goTomm(25)
     time.sleep(0.5)
+
+    # set load
 
     # 3. Lift the object
     move_to_position_long(robot_interface, np.array(lift_positions), controller_cfg)

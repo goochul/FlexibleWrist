@@ -32,7 +32,8 @@ def rotation_matrix_to_euler_angles(R):
 # -------------------------------
 # Parse the joint_positions.csv file
 # -------------------------------
-joint_positions_path = Path('data/20250302/150200/joint_positions.csv')
+# joint_positions_path = Path('data/20250302/150200/joint_positions.csv')
+joint_positions_path = Path('data/20250308/222748/joint_positions.csv')
 joint_angles_list = []
 
 with joint_positions_path.open('r') as f:
@@ -88,7 +89,7 @@ orientations = np.array(orientations)
 # -------------------------------
 # Load the y_position_data.csv file to obtain Timestamps.
 # -------------------------------
-y_position_path = Path('data/20250228/200924/y_position_data.csv')
+y_position_path = Path('data/20250308/222748/y_position_data.csv')
 # Assuming the CSV has headers like "Timestamp", "Y Position", "Event"
 y_data_df = pd.read_csv(y_position_path)
 timestamps = y_data_df["Timestamp"].values
@@ -104,8 +105,8 @@ if len(timestamps) != positions.shape[0]:
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
 
 # Plot end-effector position (X, Y, Z)
-ax1.plot(timestamps, positions[:, 0], label='X')
-ax1.plot(timestamps, positions[:, 1], label='Y')
+# ax1.plot(timestamps, positions[:, 0], label='X')
+# ax1.plot(timestamps, positions[:, 1], label='Y')
 ax1.plot(timestamps, positions[:, 2], label='Z')
 ax1.set_title("End-Effector Position vs Timestamp")
 ax1.set_xlabel("Timestamp")

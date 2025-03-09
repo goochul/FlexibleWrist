@@ -138,7 +138,7 @@ def main():
     # n_steps = 150
     # desired_positions = np.tile(current_position, (n_steps, 1))
     # desired_positions[:, 0] = np.linspace(current_position[0], 
-    #                                       current_position[0] + 0.15, 
+    #                                       current_position[0] - 0.05, 
     #                                       n_steps)
 
     # # Move +Y by 0.1 m in 10 steps
@@ -156,11 +156,11 @@ def main():
     #                                       n_steps)
 
     # Move +z by 0.1 m in 10 steps
-    # n_steps = 5
-    # desired_positions = np.tile(current_position, (n_steps, 1))
-    # desired_positions[:, 2] = np.linspace(current_position[2], 
-    #                                       current_position[2] + 0.06, 
-    #                                       n_steps)
+    n_steps = 5
+    desired_positions = np.tile(current_position, (n_steps, 1))
+    desired_positions[:, 2] = np.linspace(current_position[2], 
+                                          current_position[2] - 0.05, 
+                                          n_steps)
 
     # Desired orientation remains the same
     q_desired = q_current.copy()
