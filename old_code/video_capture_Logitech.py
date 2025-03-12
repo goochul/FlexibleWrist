@@ -44,10 +44,12 @@ while True:
 
 
     # Flip the frame horizontally + vertically
-    flipped_frame = cv2.flip(frame, -2)
+    # flipped_frame = cv2.flip(frame, 1)
 
     # Write the frame to the output file
-    out.write(flipped_frame)
+    # out.write(flipped_frame)
+    out.write(frame)
+    flipped_frame = frame
 
     # Display the frame (optional)
     cv2.imshow('Recording', flipped_frame)
