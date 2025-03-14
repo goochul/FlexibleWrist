@@ -30,16 +30,16 @@ global_start_time = None
 force_sensor = None
 initial_z_position = None
 initial_eef_position = None
-max_samples = 1000
-video_duration = 35
-pressing_time_long = 5
+max_samples = 1500
+video_duration = 60
+pressing_time_long = 12
 pressing_time_short = 0.43
 rs_camera_index = 6
 Nexigo_camera_index = 0
-force_threshold = 13
+force_threshold = 25
 torque_threshold = 5
-force_max = 13  # Set the force_max threshold here
-eef_title = "End-Effector Positions (X, Y, Z), 160mm to Y-dir"
+force_max = 25  # Set the force_max threshold here
+eef_title = "End-Effector Positions (X, Y, Z), Sliding Task"
 gripper_pos = 0
 
 # max_samples = 3500 video_duration = 110  pressing_time = 5.5
@@ -365,7 +365,17 @@ def joint_position_control(robot_interface, controller_cfg):
 
     initial_positions = [0.0061, 0.2437, -0.0046, -2.5701, 0.0049, 3.7030, 0.7468]
 
-    approach_positions = [0.0023, 0.9816, -0.0015, -1.8090, 0.0050, 3.8799, 0.7467]
+    approach_positions = [0.0022, 1.0901, -0.0014, -1.7297, 0.0049, 3.9090, 0.7469]
+
+    # 0mm: [0.0023, 0.9816, -0.0015, -1.8090, 0.0050, 3.8799, 0.7467]
+    # 5mm: [0.0023, 0.9948, -0.0015, -1.8000, 0.0050, 3.8841, 0.7467]
+    # 10mm: [0.0023, 1.0083, -0.0015, -1.7905, 0.0050, 3.8882, 0.7468]
+    # 15mm: [0.0023, 1.0218, -0.0015, -1.7810, 0.0050, 3.8920, 0.7468]
+    # 20mm: [0.0022, 1.0353, -0.0015, -1.7712, 0.0050, 3.8958, 0.7468]
+    # 25mm: [0.0022, 1.0489, -0.0015, -1.7611, 0.0049, 3.8993, 0.7468]
+    # 30mm: [0.0022, 1.0626, -0.0014, -1.7509, 0.0049, 3.9027, 0.7469]
+    # 35mm: [0.0022, 1.0763, -0.0014, -1.7404, 0.0049, 3.9060, 0.7469]
+    # 40mm: [0.0022, 1.0901, -0.0014, -1.7297, 0.0049, 3.9090, 0.7469]
 
     # 100 steps for 160mm movements. Pressing time = 0.4
     loading_positions = [ 

@@ -54,7 +54,7 @@ def parse_args():
     # FT sensor toggle: default is enabled. Use --disable-ft-sensor to disable.
     parser.add_argument("--enable-ft-sensor", dest="enable_ft_sensor", action="store_true", help="Enable force-torque sensor monitoring")
     parser.add_argument("--disable-ft-sensor", dest="enable_ft_sensor", action="store_false", help="Disable force-torque sensor monitoring")
-    parser.set_defaults(enable_ft_sensor=True)
+    parser.set_defaults(enable_ft_sensor=False)
     # Camera toggle: default is enabled. Use --disable-camera to disable.
     parser.add_argument("--enable-camera", dest="enable_camera", action="store_true", help="Enable camera recording")
     parser.add_argument("--disable-camera", dest="enable_camera", action="store_false", help="Disable camera recording")
@@ -268,7 +268,7 @@ def move_to_position(robot_interface, target_positions, controller_cfg, event_la
 
 def joint_position_control(robot_interface, controller_cfg):
     reset_joint_positions =  [0.0061, 0.2437, -0.0046, -2.5701, 0.0049, 3.7030, 0.7468]
-    des_joint_positions = [0.0023, 0.9816, -0.0015, -1.8090, 0.0050, 3.8799, 0.7467]
+    des_joint_positions = [0.0061, 0.2437, -0.0046, -2.5701, 0.0049, 3.7030, 0.7468]
     
     # [0.0079, 0.0971, -0.0056, -2.5815, 0.0085, 3.5679, 0.7432]
 

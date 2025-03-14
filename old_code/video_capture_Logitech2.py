@@ -2,33 +2,35 @@ import cv2
 import time
 import os
 
-camera_index = 0  # Use the correct index for your Logitech camera
+# Specify the camera index for Logitech (update this based on your system, e.g., 6 or 7)
+camera_index = 6  # Replace with the correct index for your Logitech camera
+
+# Set up the video capture for Logitech camera
 cap = cv2.VideoCapture(camera_index)
 if not cap.isOpened():
     print(f"Failed to open the Logitech camera at /dev/video{camera_index}.")
     exit()
 
-# Disable auto exposure (if supported) and set manual exposure
-cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)  # This value might vary depending on your camera/OS
-cap.set(cv2.CAP_PROP_EXPOSURE, -6)         # Try adjusting this value to reduce brightness
-
-# Optionally, adjust brightness directly (if supported)
-cap.set(cv2.CAP_PROP_BRIGHTNESS, 0.3)
-print("Brightness set to:", cap.get(cv2.CAP_PROP_BRIGHTNESS))
-print("Exposure set to:", cap.get(cv2.CAP_PROP_EXPOSURE))
+cap.set(cv2.CAP_PROP_AUTOFOCUS, 1)
+new_af = cap.get(cv2.CAP_PROP_AUTOFOCUS)
+print("New autofocus setting:", new_af)
 
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-frame_rate = 30
+frame_rate = 30  # Desired frame rate
 
+
+# Set up the codec and output file name
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 output_filename = 'Logitech_camera_recording.mp4'
 out = cv2.VideoWriter(output_filename, fourcc, frame_rate, (frame_width, frame_height))
+
 if not out.isOpened():
     print("Failed to initialize the VideoWriter.")
     cap.release()
     exit()
 
+# Start time of the recording
 start_time = time.time()
 record_duration = 1700  # Duration in seconds
 
@@ -40,20 +42,31 @@ while True:
         print("Failed to capture frame.")
         break
 
-    # Flip the frame horizontally and vertically
-    flipped_frame = cv2.flip(frame, -2)
-    out.write(flipped_frame)
+
+    # Flip the frame horizontally + vertically
+    # flipped_frame = cv2.flip(frame, 1)
+
+    # Write the frame to the output file
+    # out.write(flipped_frame)
+    out.write(frame)
+    flipped_frame = frame
+
+    # Display the frame (optional)
     cv2.imshow('Recording', flipped_frame)
-    
+
+    # Check if the recording time has reached the limit or if 'q' is pressed
     if time.time() - start_time > record_duration or cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+# Release the video capture and writer objects
 cap.release()
 out.release()
 cv2.destroyAllWindows()
 
+# Ask the user if they want to save the file
 save = input("Recording complete. Do you want to save the recording? (yes/no): ").strip().lower()
 if save != 'yes':
+    # Delete the file if the user doesn't want to save it
     try:
         os.remove(output_filename)
         print("Recording deleted.")

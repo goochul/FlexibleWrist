@@ -121,7 +121,7 @@ def main():
     ])
 
     # Initial joint values (theta) in radians (7 joints only)
-    initial_joint_positions = np.array([-0.0183, -0.3610, 0.0209, -2.1050, 0.0351, 3.3334, 0.7193]
+    initial_joint_positions = np.array([0.0023, 0.9816, -0.0015, -1.8090, 0.0050, 3.8799, 0.7467]
 )
 
     # FW 0mm init
@@ -136,11 +136,11 @@ def main():
     q_current = rotm2quat(current_orientation)
 
     # Move +x by 0.1 m in 10 steps
-    n_steps = 100
-    desired_positions = np.tile(current_position, (n_steps, 1))
-    desired_positions[:, 0] = np.linspace(current_position[0], 
-                                          current_position[0] + 0.16, 
-                                          n_steps)
+    # n_steps = 100
+    # desired_positions = np.tile(current_position, (n_steps, 1))
+    # desired_positions[:, 0] = np.linspace(current_position[0], 
+    #                                       current_position[0] + 0.16, 
+    #                                       n_steps)
 
     # # Move +Y by 0.1 m in 10 steps
     # n_steps = 100
@@ -157,11 +157,11 @@ def main():
     #                                       n_steps)
 
     # Move +z by 0.1 m in 10 steps
-    # n_steps = 100
-    # desired_positions = np.tile(current_position, (n_steps, 1))
-    # desired_positions[:, 2] = np.linspace(current_position[2], 
-    #                                       current_position[2] -0.15 +0.49, 
-    #                                       n_steps)
+    n_steps = 100
+    desired_positions = np.tile(current_position, (n_steps, 1))
+    desired_positions[:, 2] = np.linspace(current_position[2], 
+                                          current_position[2] -0.04, 
+                                          n_steps)
     # + 0.49
 
     # Desired orientation remains the same
