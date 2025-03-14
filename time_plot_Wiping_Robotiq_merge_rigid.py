@@ -181,7 +181,6 @@ for group_name, paths in groups.items():
         y_disp_interp = y_disp
 
     # Apply vertical flip.
-    # If you want to flip only specific groups, add conditionals here.
     y_disp_flip = -y_disp_interp
 
     group_results[group_name] = {
@@ -202,6 +201,12 @@ for group_name, results in group_results.items():
         results["y_disp"] = results["y_disp"] - 0.02
     else:
         results["y_disp"] = results["y_disp"] + 0.03
+
+# ======================================================
+# Final x-axis shift: move all x-axis values +0.01 m to the right
+# ======================================================
+for group_name, results in group_results.items():
+    results["y_disp"] = results["y_disp"] + 0.01
 
 # ======================================================
 # Plotting: Merged Force and Torque Magnitude vs SHIFTED Y-Displacement

@@ -6,34 +6,43 @@ import numpy as np
 import ast
 
 # ======================================================
-# Define new groups with updated dataset paths
+# Define groups (each with 3 datasets)
 # ======================================================
 groups = {
-    "Rigid - 0mm space": [
-        Path('data/20250302/161651/'),
-        Path('data/20250302/161811/'),
-        Path('data/20250302/161919/')
+    "FW - 0mm space": [
+        Path('data/20250302/174847/'),
+        Path('data/20250302/175224/'),
+        Path('data/20250302/175419/')
     ],
-    "Rigid - 5mm space": [
-        Path('data/20250302/161111/'),
-        Path('data/20250302/161218/'),
-        Path('data/20250302/161327/')
+    "FW - 5mm space": [
+        Path('data/20250302/180324/'),
+        Path('data/20250302/180437/'),
+        Path('data/20250302/180558/')
     ],
-    "Rigid - 10mm space": [
-        Path('data/20250302/160440/'),
-        Path('data/20250302/160706/'),
-        Path('data/20250302/160814/')
+    "FW - 10mm space": [
+        Path('data/20250302/181233/'),
+        Path('data/20250302/181537/'),
+        Path('data/20250302/181722/')
     ],
-    "Rigid - 14mm space": [
-        Path('data/20250302/204348/'),
-        Path('data/20250302/204537/'),
-        Path('data/20250302/204700/')
+    "FW - 15mm space": [
+        Path('data/20250302/182031/'),
+        Path('data/20250302/182142/'),
+        Path('data/20250302/182248/')
     ],
-    "Rigid - 15mm space": [
-        Path('data/20250302/202941/')
+    "FW - 20mm space": [
+        Path('data/20250302/182534/'),
+        Path('data/20250302/182730/'),
+        Path('data/20250302/182941/')
     ],
-    "Rigid - 20mm space": [
-        Path('data/20250302/162555/')
+    "FW - 50mm space": [
+        Path('data/20250302/192458/'),
+        Path('data/20250302/193221/'),
+        Path('data/20250302/193453/')
+    ],
+    "FW - 55mm space": [
+        Path('data/20250302/194923/'),
+        Path('data/20250302/195041/'),
+        Path('data/20250302/195340/')
     ]
 }
 
@@ -180,8 +189,8 @@ for group_name, paths in groups.items():
     else:
         y_disp_interp = y_disp
 
-    # Apply vertical flip.
-    # If you want to flip only specific groups, add conditionals here.
+    # Apply vertical flip ONLY if needed. In this example, we flip ALL groups;
+    # If you only want to flip some groups, add a conditional here.
     y_disp_flip = -y_disp_interp
 
     group_results[group_name] = {
@@ -194,11 +203,11 @@ for group_name, paths in groups.items():
 
 # ======================================================
 # Apply additional shifts:
-# Shift "Rigid - 50mm space" and "Rigid - 55mm space" by -0.02 (left)
+# Shift "FW - 50mm space" and "FW - 55mm space" by -0.02 (left)
 # Shift all other groups by +0.03 (right)
 # ======================================================
 for group_name, results in group_results.items():
-    if group_name in ["Rigid - 50mm space", "Rigid - 55mm space"]:
+    if group_name in ["FW - 50mm space", "FW - 55mm space"]:
         results["y_disp"] = results["y_disp"] - 0.02
     else:
         results["y_disp"] = results["y_disp"] + 0.03
@@ -208,7 +217,7 @@ for group_name, results in group_results.items():
 # ======================================================
 fig, (ax_force, ax_torque) = plt.subplots(2, 1, figsize=(12, 10))
 
-colors = ['blue', 'green', 'red', 'purple', 'orange', 'brown']
+colors = ['blue', 'green', 'red', 'purple', 'orange', 'brown', 'cyan']
 for idx, (group_name, results) in enumerate(group_results.items()):
     # Use the shifted y_disp as the x-axis.
     x_axis = results["y_disp"]
@@ -233,13 +242,13 @@ for idx, (group_name, results) in enumerate(group_results.items()):
                            mean_torque + std_torque,
                            color=colors[idx], alpha=0.3)
 
-ax_force.set_xlabel("Y-Displacement (m)")
+ax_force.set_xlabel("Y-Position (m)")
 ax_force.set_ylabel("Force Magnitude (N)")
 ax_force.set_title("Merged Filtered Force Magnitude vs Y-Displacement")
 ax_force.legend(loc="upper right")
 ax_force.grid(True)
 
-ax_torque.set_xlabel("Y-Displacement (m)")
+ax_torque.set_xlabel("Y-Position (m) ")
 ax_torque.set_ylabel("Torque Magnitude (Nm)")
 ax_torque.set_title("Merged Filtered Torque Magnitude vs Y-Displacement")
 ax_torque.legend(loc="upper right")
