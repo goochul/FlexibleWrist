@@ -7,7 +7,8 @@ import os
 
 # List of file paths
 file_paths = [
-    Path('data/20250314/145806/')
+    # Path('data/20250314/145806/')
+    Path('data/20250314/145117/')
 ]
 
 force_plot_title = "Flexible Wrist + 55mm Peak Height: Filtered Force (with Rotated Fx, Rotated Fy, Fz) and Y Position"
