@@ -121,7 +121,7 @@ def main():
     ])
 
     # Initial joint values (theta) in radians (7 joints only)
-    initial_joint_positions = np.array([0.0023, 0.9816, -0.0015, -1.8090, 0.0050, 3.8799, 0.7467]
+    initial_joint_positions = np.array([0.0033, 0.9763, -0.0027, -1.8127, 0.0039, 3.8001, 0.0012]
 )
 
     # FW 0mm init
@@ -160,7 +160,7 @@ def main():
     n_steps = 100
     desired_positions = np.tile(current_position, (n_steps, 1))
     desired_positions[:, 2] = np.linspace(current_position[2], 
-                                          current_position[2] -0.04, 
+                                          current_position[2] - 0.02, 
                                           n_steps)
     # + 0.49
 

@@ -36,9 +36,9 @@ pressing_time_long = 12
 pressing_time_short = 0.43
 rs_camera_index = 6
 Nexigo_camera_index = 0
-force_threshold = 25
+force_threshold = 30
 torque_threshold = 5
-force_max = 25  # Set the force_max threshold here
+force_max = 30  # Set the force_max threshold here
 eef_title = "End-Effector Positions (X, Y, Z), Sliding Task"
 gripper_pos = 0
 
@@ -63,7 +63,7 @@ def parse_args():
     # Camera toggle: default is disabled here. Use --enable-camera to enable.
     parser.add_argument("--enable-camera", dest="enable_camera", action="store_true", help="Enable camera recording")
     parser.add_argument("--disable-camera", dest="enable_camera", action="store_false", help="Disable camera recording")
-    parser.set_defaults(enable_camera=True)
+    parser.set_defaults(enable_camera=False)
     return parser.parse_args()
 
 # FT Sensor Functions
@@ -365,7 +365,7 @@ def joint_position_control(robot_interface, controller_cfg):
 
     initial_positions = [0.0061, 0.2437, -0.0046, -2.5701, 0.0049, 3.7030, 0.7468]
 
-    approach_positions = [0.0022, 1.0901, -0.0014, -1.7297, 0.0049, 3.9090, 0.7469]
+    approach_positions = [0.0022, 1.1460, -0.0014, -1.6843, 0.0049, 3.9196, 0.7470]
 
     # 0mm: [0.0023, 0.9816, -0.0015, -1.8090, 0.0050, 3.8799, 0.7467]
     # 5mm: [0.0023, 0.9948, -0.0015, -1.8000, 0.0050, 3.8841, 0.7467]
@@ -376,6 +376,10 @@ def joint_position_control(robot_interface, controller_cfg):
     # 30mm: [0.0022, 1.0626, -0.0014, -1.7509, 0.0049, 3.9027, 0.7469]
     # 35mm: [0.0022, 1.0763, -0.0014, -1.7404, 0.0049, 3.9060, 0.7469]
     # 40mm: [0.0022, 1.0901, -0.0014, -1.7297, 0.0049, 3.9090, 0.7469]
+    # 45mm: [0.0022, 1.1039, -0.0014, -1.7187, 0.0049, 3.9119, 0.7469]
+    # 50mm: [0.0022, 1.1179, -0.0014, -1.7075, 0.0049, 3.9147, 0.7470]
+    # 55mm: [0.0022, 1.1319, -0.0014, -1.6960, 0.0049, 3.9172, 0.7470]
+    # 60mm: [0.0022, 1.1460, -0.0014, -1.6843, 0.0049, 3.9196, 0.7470]
 
     # 100 steps for 160mm movements. Pressing time = 0.4
     loading_positions = [ 
